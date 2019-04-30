@@ -84,8 +84,11 @@ PARA_TGT_TEST_BPE=$PROC_PATH/test.$SRC-$TGT.$TGT
 # train / valid / test file raw data
 unset PARA_SRC_TRAIN PARA_TGT_TRAIN PARA_SRC_VALID PARA_TGT_VALID PARA_SRC_TEST PARA_TGT_TEST
 if [ "$SRC" == "en" -a "$TGT" == "zh" ]; then
-  PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.txt
-  PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.txt
+  # PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.txt
+  # PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.txt
+  # Use 100,000 lines of training data.
+  PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.shuffle.txt10
+  PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.shuffle.txt10
   PARA_SRC_VALID=$PARA_PATH/dev/newsdev2017-zhen-ref.en
   PARA_TGT_VALID=$PARA_PATH/dev/newsdev2017-zhen-src.zh
   PARA_SRC_TEST=$PARA_PATH/dev/newstest2017-zhen-ref.en
