@@ -89,10 +89,13 @@ if [ "$SRC" == "en" -a "$TGT" == "zh" ]; then
   # Use 100,000 lines of training data.
   PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.shuffle.txt10
   PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.shuffle.txt10
+  # TODO: Add code in the script to do the segmentation automatically.
+  # CMD:  segment.sh ctb newsdev2017-zhen-src.zh UTF-8 0 > newsdev2017-zhen-src.seg.zh
+  #       segment.sh ctb newstest2017-zhen-src.zh UTF-8 0 > newstest2017-zhen-src.seg.zh
   PARA_SRC_VALID=$PARA_PATH/dev/newsdev2017-zhen-ref.en
-  PARA_TGT_VALID=$PARA_PATH/dev/newsdev2017-zhen-src.zh
+  PARA_TGT_VALID=$PARA_PATH/dev/newsdev2017-zhen-src.seg.zh
   PARA_SRC_TEST=$PARA_PATH/dev/newstest2017-zhen-ref.en
-  PARA_TGT_TEST=$PARA_PATH/dev/newstest2017-zhen-src.zh
+  PARA_TGT_TEST=$PARA_PATH/dev/newstest2017-zhen-src.seg.zh
 fi
 
 # install tools
