@@ -53,6 +53,10 @@ INPUT_FROM_SGM=$MOSES/scripts/ems/support/input-from-sgm.perl
 FASTBPE_DIR=$TOOLS_PATH/fastBPE
 FASTBPE=$TOOLS_PATH/fastBPE/fast
 
+# stanford segmenter
+SEGMENTER_DIR=$TOOLS_PATH/stanford-segmenter-*
+SEGMENTER=$SEGMENTER_DIR/segment.sh
+
 # raw and tokenized files
 SRC_RAW=$MONO_PATH/$SRC/all.$SRC
 TGT_RAW=$MONO_PATH/$TGT/all.$TGT
@@ -93,9 +97,11 @@ if [ "$SRC" == "en" -a "$TGT" == "zh" ]; then
   # CMD:  segment.sh ctb newsdev2017-zhen-src.zh UTF-8 0 > newsdev2017-zhen-src.seg.zh
   #       segment.sh ctb newstest2017-zhen-src.zh UTF-8 0 > newstest2017-zhen-src.seg.zh
   PARA_SRC_VALID=$PARA_PATH/dev/newsdev2017-zhen-ref.en
-  PARA_TGT_VALID=$PARA_PATH/dev/newsdev2017-zhen-src.seg.zh
+  PARA_TGT_VALID=$PARA_PATH/dev/newsdev2017-zhen-src.zh
+  PARA_TGT_VALID_SEG=$PARA_PATH/dev/newsdev2017-zhen-src.seg.zh
   PARA_SRC_TEST=$PARA_PATH/dev/newstest2017-zhen-ref.en
-  PARA_TGT_TEST=$PARA_PATH/dev/newstest2017-zhen-src.seg.zh
+  PARA_TGT_TEST=$PARA_PATH/dev/newstest2017-zhen-src.zh
+  PARA_TGT_TEST_SEG=$PARA_PATH/dev/newstest2017-zhen-src.seg.zh
 fi
 
 # install tools
@@ -217,23 +223,27 @@ tar -xzf dev.tgz
 
 # check valid and test files are here
 if ! [[ -f "$PARA_SRC_VALID.sgm" ]]; then echo "$PARA_SRC_VALID.sgm is not found!"; exit; fi
-# if ! [[ -f "$PARA_TGT_VALID.sgm" ]]; then echo "$PARA_TGT_VALID.sgm is not found!"; exit; fi
+if ! [[ -f "$PARA_TGT_VALID.sgm" ]]; then echo "$PARA_TGT_VALID.sgm is not found!"; exit; fi
 if ! [[ -f "$PARA_SRC_TEST.sgm" ]];  then echo "$PARA_SRC_TEST.sgm is not found!";  exit; fi
-# if ! [[ -f "$PARA_TGT_TEST.sgm" ]];  then echo "$PARA_TGT_TEST.sgm is not found!";  exit; fi
+if ! [[ -f "$PARA_TGT_TEST.sgm" ]];  then echo "$PARA_TGT_TEST.sgm is not found!";  exit; fi
 
 echo "Tokenizing valid and test data..."
 eval "$INPUT_FROM_SGM < $PARA_SRC_VALID.sgm | $SRC_PREPROCESSING > $PARA_SRC_VALID"
-# eval "$INPUT_FROM_SGM < $PARA_TGT_VALID.sgm | $TGT_PREPROCESSING > $PARA_TGT_VALID"
+eval "$INPUT_FROM_SGM < $PARA_TGT_VALID.sgm | $TGT_PREPROCESSING > $PARA_TGT_VALID"
 eval "$INPUT_FROM_SGM < $PARA_SRC_TEST.sgm  | $SRC_PREPROCESSING > $PARA_SRC_TEST"
-# eval "$INPUT_FROM_SGM < $PARA_TGT_TEST.sgm  | $TGT_PREPROCESSING > $PARA_TGT_TEST"
+eval "$INPUT_FROM_SGM < $PARA_TGT_TEST.sgm  | $TGT_PREPROCESSING > $PARA_TGT_TEST"
+
+echo "Applying Chinese segment to valid and test files..."
+$SEGMENTER ctb $PARA_TGT_VALID UTF-8 0 > $PARA_TGT_VALID_SEG
+$SEGMENTER ctb $PARA_TGT_TEST UTF-8 0 > $PARA_TGT_TEST_SEG
 
 echo "Applying BPE to valid and test files..."
 $FASTBPE applybpe $PARA_SRC_TRAIN_BPE $PARA_SRC_TRAIN $BPE_CODES $SRC_VOCAB
 $FASTBPE applybpe $PARA_TGT_TRAIN_BPE $PARA_TGT_TRAIN $BPE_CODES $TGT_VOCAB
 $FASTBPE applybpe $PARA_SRC_VALID_BPE $PARA_SRC_VALID $BPE_CODES $SRC_VOCAB
-$FASTBPE applybpe $PARA_TGT_VALID_BPE $PARA_TGT_VALID $BPE_CODES $TGT_VOCAB
+$FASTBPE applybpe $PARA_TGT_VALID_BPE $PARA_TGT_VALID_SEG $BPE_CODES $TGT_VOCAB
 $FASTBPE applybpe $PARA_SRC_TEST_BPE  $PARA_SRC_TEST  $BPE_CODES $SRC_VOCAB
-$FASTBPE applybpe $PARA_TGT_TEST_BPE  $PARA_TGT_TEST  $BPE_CODES $TGT_VOCAB
+$FASTBPE applybpe $PARA_TGT_TEST_BPE  $PARA_TGT_TEST_SEG  $BPE_CODES $TGT_VOCAB
 
 echo "Binarizing data..."
 rm -f $PARA_SRC_TRAIN_BPE.pth $PARA_TGT_TRAIN_BPE.pth $PARA_SRC_VALID_BPE.pth $PARA_TGT_VALID_BPE.pth $PARA_SRC_TEST_BPE.pth $PARA_TGT_TEST_BPE.pth
