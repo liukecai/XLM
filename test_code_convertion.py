@@ -9,7 +9,6 @@ from src.data.dictionary import Dictionary
 from src.data.code_convertion import ConverterBPE2BPE
 from src.utils import bool_flag
 import argparse
-import fastBPE
 import io
 import numpy as np
 import os
@@ -64,6 +63,7 @@ def mytest20190508():
 
 
 def mytest20190509():
+    import fastBPE
     bpe = fastBPE.fastBPE("data/processed/en-zh/codes", "data/processed/en-zh/vocab.en-zh")
     re = bpe.apply(["Roasted barramundi fish", "Centrally managed over a client-server architecture"])
     print(re)
@@ -71,5 +71,5 @@ def mytest20190509():
 
 # https://www.cnblogs.com/feng18/p/5646925.html
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
-# mytest20190508()
-mytest20190509()
+mytest20190508()
+# mytest20190509()
