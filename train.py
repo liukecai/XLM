@@ -198,7 +198,7 @@ def get_parser():
                         help="Master port (for multi-node SLURM jobs)")
 
     # avoid degenerate
-    parser.add_argument("--degenerate", type=bool_flag, default=False,
+    parser.add_argument("--anti_degenerate", type=bool_flag, default=False,
                         help="Use this way for avoid degenerate")
     return parser
 
