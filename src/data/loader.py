@@ -6,7 +6,6 @@
 #
 
 from logging import getLogger
-from .code_convertion import load_dict
 import os
 import numpy as np
 import torch
@@ -331,7 +330,8 @@ def load_data(params):
 
     # monolingual dict
     if params.anti_degenerate:
-        load_dict(params, data)
+        # TODO: to add code later
+        pass
 
     # monolingual data summary
     logger.info('============ Data summary')

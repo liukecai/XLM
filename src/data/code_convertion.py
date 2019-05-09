@@ -6,6 +6,7 @@
 #
 
 import os
+import xlwt
 from logging import getLogger
 
 logger = getLogger()
@@ -28,31 +29,45 @@ def load_para_dict(filename):
     return para_dict
 
 
-def load_dict(params, data):
-    assert len(params.langs) == 2, "Need src and tgt two languages"
+class ConverterBPE2BPE():
+    def __init__(self, params):
+        assert len(params.langs) == 2, "Need two languages"
+        lan0_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[0])
+        lan1_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[1])
+        all_dict_path = os.path.join(params.data_path, "vocab.%s-%s" % (params.langs[0], params.langs[1]))
+        assert os.path.isfile(lan0_dict_path) and os.path.isfile(lan1_dict_path) and os.path.isfile(all_dict_path)
+        from .dictionary import Dictionary
+        logger.info("Read lan0 monolingual vocabulary...")
+        self.lan0_vocab = Dictionary.read_vocab(lan0_dict_path)
+        logger.info("Read lan1 monolingual vocabulary...")
+        self.lan1_vocab = Dictionary.read_vocab(lan1_dict_path)
+        logger.info("Read monolingual vocabulary for both languages...")
+        self.all_vocab = Dictionary.read_vocab(all_dict_path)
 
-    src_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[0])
-    tgt_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[1])
-    src_para_dict_path = os.path.join(params.data_path,
-                                      "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[0]))
-    tgt_para_dict_path = os.path.join(params.data_path,
-                                      "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[1]))
+        lan0_para_dict_path = os.path.join(params.data_path,
+                                          "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[0]))
+        lan1_para_dict_path = os.path.join(params.data_path,
+                                          "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[1]))
+        assert os.path.isfile(lan0_para_dict_path) and os.path.isfile(lan1_para_dict_path)
+        logger.info("Read parallel dictionary for language 0...")
+        # self.dict_lan0 = load_para_dict(lan0_para_dict_path)
+        logger.info("Read parallel dictionary for language 1...")
+        # self.dict_lan1 = load_para_dict(lan1_para_dict_path)
 
-    assert os.path.isfile(src_dict_path) and os.path.isfile(tgt_dict_path) \
-           and os.path.isfile(src_para_dict_path) and os.path.isfile(tgt_para_dict_path)
+    def saveCodesInCharsInExcel(self, codes, ofilename):
+        writebook = xlwt.Workbook()
+        sheets = []
+        sheet = writebook.add_sheet('data')
+        sheets.append(sheet)
+        nRows , nCols = codes.shape
+        for iRow in range(nRows):
+            for iCol in range(nCols):
+                iData = int( iCol / 256 )
+                if (len(sheets) <= iData) :
+                    sheets.append(writebook.add_sheet('data' + str(iData)))
+                iColInExcel = iCol % 256
+                sheets[iData].write(iRow, iColInExcel, self.all_vocab[codes[iRow][iCol]])
+        writebook.save(ofilename)
 
-    from .dictionary import Dictionary
-
-    logger.info("Read source monolingual vocabulary...")
-    src_vocab = Dictionary.read_vocab(src_dict_path)
-    data["src_vocab"] = src_vocab
-
-    logger.info("Read target monolingual vocabulary...")
-    tgt_vocab = Dictionary.read_vocab(tgt_dict_path)
-    data["tgt_vocab"] = tgt_vocab
-
-    logger.info("Read source parallel dictionary...")
-    data["src_para_dict"] = load_para_dict(src_para_dict_path)
-
-    logger.info("Read target parallel dictionary...")
-    data["tgt_para_dict"] = load_para_dict(tgt_para_dict_path)
+    def convertCodes2Lan(self, codes, lan):
+        return codes

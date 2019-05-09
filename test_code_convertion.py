@@ -6,40 +6,60 @@
 #
 
 from src.data.dictionary import Dictionary
+from src.data.code_convertion import ConverterBPE2BPE
+from src.utils import bool_flag
+import argparse
 import io
 import numpy as np
+import os
 import sys
-import xlwt
 
 
-def printCodesInChars(codes, dict):
-    nRows , nCols = codes.shape
-    for iRow in range(nRows):
-        for iCol in range(nCols):
-            print(dict[codes[iRow][iCol]], end=' ')
-        print()
+def get_parser():
+    parser = argparse.ArgumentParser(description="Language transfer")
 
-def saveCodesInCharsInExcel(codes, dict, ofilename):
-    writebook = xlwt.Workbook()
-    sheets = []
-    sheet = writebook.add_sheet('data')
-    sheets.append(sheet)
-    nRows , nCols = codes.shape
-    for iRow in range(nRows):
-        for iCol in range(nCols):
-            iData = int( iCol / 256 )
-            if (len(sheets) <= iData) :
-                sheets.append(writebook.add_sheet('data' + str(iData)))
-            iColInExcel = iCol % 256
-            sheets[iData].write(iRow, iColInExcel, dict[codes[iRow][iCol]])
-    writebook.save(ofilename)
+    # data
+    parser.add_argument("--data_path", type=str, default="",
+                        help="Data path")
+    parser.add_argument("--lgs", type=str, default="",
+                        help="Languages (lg1-lg2-lg3 .. ex: en-fr-es-de)")
+    # avoid degenerate
+    parser.add_argument("--anti_degenerate", type=bool_flag, default=False,
+                        help="Use this way for avoid degenerate")
+
+    parser.add_argument("--data_file_to_convert", type=str, default="",
+                        help="The name of the data file to be converted.")
+    return parser
+
+
+def check_data_params(params):
+    """
+    Check datasets parameters.
+    """
+    # data path
+    assert os.path.isdir(params.data_path), params.data_path
+
+    # check languages
+    params.langs = params.lgs.split('-') if params.lgs != 'debug' else ['en']
+    assert len(params.langs) == len(set(params.langs)) >= 1
+    # assert sorted(params.langs) == params.langs
+    params.id2lang = {k: v for k, v in enumerate(sorted(params.langs))}
+    params.lang2id = {k: v for v, k in params.id2lang.items()}
+    params.n_langs = len(params.langs)
+
 
 def mytest20190508():
-    dict = Dictionary.read_vocab('data/processed/en-zh/vocab.en-zh')
-    dataToConvert = np.loadtxt(sys.argv[1], np.int32)
+    parser = get_parser()
+    params = parser.parse_args()
+    check_data_params(params)
+    converter = ConverterBPE2BPE(params)
+    dataToConvert = np.loadtxt(params.data_file_to_convert, np.int32)
 
-    printCodesInChars(dataToConvert, dict)
-    saveCodesInCharsInExcel(dataToConvert, dict, sys.argv[1] + ".xls")
+    converter.saveCodesInCharsInExcel(dataToConvert, params.data_file_to_convert + ".xls")
+    dataConvertEn = converter.convertCodes2Lan(dataToConvert, 'en')
+    dataConvertZh = converter.convertCodes2Lan(dataToConvert, 'zh')
+    converter.saveCodesInCharsInExcel(dataConvertEn, params.data_file_to_convert + ".2en.xls")
+    converter.saveCodesInCharsInExcel(dataConvertZh, params.data_file_to_convert + ".2zh.xls")
 
 # https://www.cnblogs.com/feng18/p/5646925.html
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
