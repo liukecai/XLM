@@ -9,6 +9,7 @@ from src.data.dictionary import Dictionary
 from src.data.code_convertion import ConverterBPE2BPE
 from src.utils import bool_flag
 import argparse
+import fastBPE
 import io
 import numpy as np
 import os
@@ -61,6 +62,14 @@ def mytest20190508():
     converter.saveCodesInCharsInExcel(dataConvertEn, params.data_file_to_convert + ".2en.xls")
     converter.saveCodesInCharsInExcel(dataConvertZh, params.data_file_to_convert + ".2zh.xls")
 
+
+def mytest20190509():
+    bpe = fastBPE.fastBPE("data/processed/en-zh/codes", "data/processed/en-zh/vocab.en-zh")
+    re = bpe.apply(["Roasted barramundi fish", "Centrally managed over a client-server architecture"])
+    print(re)
+
+
 # https://www.cnblogs.com/feng18/p/5646925.html
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
-mytest20190508()
+# mytest20190508()
+mytest20190509()
