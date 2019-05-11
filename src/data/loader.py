@@ -329,6 +329,11 @@ def load_data(params):
     # parallel datasets
     load_para_data(params, data)
 
+    # monolingual dict
+    if params.anti_degenerate:
+        # TODO: to add code later
+        pass
+
     # monolingual data summary
     logger.info('============ Data summary')
     for lang, v in data['mono_stream'].items():
