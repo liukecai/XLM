@@ -61,7 +61,7 @@ if [ ! -d $TOOLS_PATH/wikiextractor ]; then
 fi
 
 # Download Stanford-segmenter-2018-10-16
-if [ ! -d $TOOLS_PATH/stanford-segmenter-* ]; then
+if [ ! -d $TOOLS_PATH/stanford-segmenter-2018-10-16 ]; then
     echo "Downloading stanford segmenter..."
     wget -c https://nlp.stanford.edu/software/stanford-segmenter-2018-10-16.zip
     unzip -K stanford-segmenter-2018-10-16.zip
