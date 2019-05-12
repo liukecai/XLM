@@ -69,7 +69,71 @@ def mytest20190509():
     print(re)
 
 
+def mytest20190512():
+    # https://github.com/google/pygtrie
+    # pip install pygtrie
+    import pygtrie as trie
+    parser = get_parser()
+    params = parser.parse_args()
+    check_data_params(params)
+
+    lan0_para_dict_path = os.path.join(params.data_path,
+                                       "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[0]))
+    lan1_para_dict_path = os.path.join(params.data_path,
+                                       "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[1]))
+
+    lan0_para_dict_file = open(lan0_para_dict_path, mode="r", encoding="UTF-8")
+    lan1_para_dict_file = open(lan1_para_dict_path, mode="r", encoding="UTF-8")
+
+    count = 0
+
+    lan0_dict_tree = trie.CharTrie()
+    lines = lan0_para_dict_file.readlines()
+    for line in lines:
+        if count == 10000:
+            break
+        count += 1
+        line = line.strip()
+        if len(line) != 0:
+            tmp = line.split()
+            if lan0_dict_tree.has_key(tmp[0]):
+                lan0_dict_tree[tmp[0]].append(tmp[1])
+            else:
+                lan0_dict_tree[tmp[0]] = [tmp[1]]
+    lan0_para_dict_file.close()
+
+    count = 0
+
+    lan1_dict_tree = trie.CharTrie()
+    lines = lan1_para_dict_file.readlines()
+    for line in lines:
+        if count == 10000:
+            break
+        count += 1
+
+        line = line.strip()
+        if len(line) != 0:
+            tmp = line.split()
+            if lan1_dict_tree.has_key(tmp[0]):
+                lan1_dict_tree[tmp[0]].append(tmp[1])
+            else:
+                lan1_dict_tree[tmp[0]] = [tmp[1]]
+    lan1_para_dict_file.close()
+
+    if lan0_dict_tree.has_subtrie("s") or lan0_dict_tree.has_key("s"):
+        print(lan0_dict_tree.items("s"))
+        print(lan0_dict_tree.items("sa"))
+        print(lan0_dict_tree.items("se"))
+
+    print()
+    if lan0_dict_tree.has_subtrie("学") or lan1_dict_tree.has_key("学"):
+        # don't need sys.stdout
+        print(lan1_dict_tree.items("学"))
+        print(lan1_dict_tree.items("学生"))
+
+
 # https://www.cnblogs.com/feng18/p/5646925.html
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
 mytest20190508()
 # mytest20190509()
+# mytest20190512()
