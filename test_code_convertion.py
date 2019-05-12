@@ -164,9 +164,31 @@ def mytest20190512_num_covert_prob(lan0_dict, lan1_dict):
 
     print()
 
+import random
+def mytest20190512_select_word(lan_dict, word):
+    if lan_dict.has_subtrie(word) or lan_dict.has_key(word):
+        keys = lan_dict.keys(word)
+        index = random.randint(0, len(keys) - 1)
+        key = keys[index]
+
+        index_w = np.random.choice([x for x in range(len(lan_dict[key][1]))], p = lan_dict[key][1])
+        return key, lan_dict[key][0][index_w]
+
+
 # https://www.cnblogs.com/feng18/p/5646925.html
 # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
 # mytest20190508()
 # mytest20190509()
 lan0_dict, lan1_dict = mytest20190512()
 mytest20190512_num_covert_prob(lan0_dict, lan1_dict)
+
+for _ in range(5):
+    for w in ["se", "al", "bl"]:
+        select_word, new_word = mytest20190512_select_word(lan0_dict, w)
+        print(select_word, " ", new_word)
+
+    for w in ["我", "学", "水"]:
+        select_word, new_word = mytest20190512_select_word(lan1_dict, w)
+        print(select_word, " ", new_word)
+
+    print()
