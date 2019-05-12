@@ -97,9 +97,10 @@ def mytest20190512():
         if len(line) != 0:
             tmp = line.split()
             if lan0_dict_tree.has_key(tmp[0]):
-                lan0_dict_tree[tmp[0]].append(tmp[1])
+                lan0_dict_tree[tmp[0]][0].append(tmp[1])
+                lan0_dict_tree[tmp[0]][1].append(int(tmp[2]))
             else:
-                lan0_dict_tree[tmp[0]] = [tmp[1]]
+                lan0_dict_tree[tmp[0]] = [[tmp[1]], [int(tmp[2])]]
     lan0_para_dict_file.close()
 
     count = 0
@@ -115,9 +116,10 @@ def mytest20190512():
         if len(line) != 0:
             tmp = line.split()
             if lan1_dict_tree.has_key(tmp[0]):
-                lan1_dict_tree[tmp[0]].append(tmp[1])
+                lan1_dict_tree[tmp[0]][0].append(tmp[1])
+                lan1_dict_tree[tmp[0]][1].append(int(tmp[2]))
             else:
-                lan1_dict_tree[tmp[0]] = [tmp[1]]
+                lan1_dict_tree[tmp[0]] = [[tmp[1]], [int(tmp[2])]]
     lan1_para_dict_file.close()
 
     if lan0_dict_tree.has_subtrie("s") or lan0_dict_tree.has_key("s"):
@@ -131,9 +133,40 @@ def mytest20190512():
         print(lan1_dict_tree.items("学"))
         print(lan1_dict_tree.items("学生"))
 
+    return lan0_dict_tree, lan1_dict_tree
+
+
+def mytest20190512_num_covert_prob(lan0_dict, lan1_dict):
+    for key in lan0_dict.keys():
+        if len(lan0_dict[key][0]) != len(lan0_dict[key][1]):
+            print(key)
+            print("Content length: %d Prob length: %d" % (len(lan0_dict[key][0]), len(lan0_dict[key][1])))
+            continue
+        p0 = np.array(lan0_dict[key][1])
+        p0 = p0/np.sum(p0)
+
+        # softmax
+        p0 = np.exp(p0)/np.sum(np.exp(p0))
+
+        lan0_dict[key][1] = p0
+    for key in lan1_dict.keys():
+        if len(lan1_dict[key][0]) != len(lan1_dict[key][1]):
+            print(key)
+            print("Content length: %d Prob length: %d" % (len(lan1_dict[key][0]), len(lan1_dict[key][1])))
+            continue
+        p1 = np.array(lan1_dict[key][1])
+        p1 = p1/np.sum(p1)
+
+        # softmax
+        p1 = np.exp(p1)/np.sum(np.exp(p1))
+
+        lan1_dict[key][1] = p1
+
+    print()
 
 # https://www.cnblogs.com/feng18/p/5646925.html
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
-mytest20190508()
+# sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
+# mytest20190508()
 # mytest20190509()
-# mytest20190512()
+lan0_dict, lan1_dict = mytest20190512()
+mytest20190512_num_covert_prob(lan0_dict, lan1_dict)
