@@ -6,6 +6,7 @@
 #
 
 import os
+import re
 import xlwt
 from logging import getLogger
 
@@ -54,6 +55,8 @@ class ConverterBPE2BPE():
         logger.info("Read parallel dictionary for language 1...")
         # self.dict_lan1 = load_para_dict(lan1_para_dict_path)
 
+        self.IS_DIGIT = re.compile(r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$')
+
     def saveCodesInCharsInExcel(self, codes, ofilename):
         writebook = xlwt.Workbook()
         sheets = []
@@ -70,4 +73,55 @@ class ConverterBPE2BPE():
         writebook.save(ofilename)
 
     def convertCodes2Lan(self, codes, lan):
+        nRows, nCols = codes.shape
+        sentences = []
+        for iCols in range(nCols):
+            sentence = []
+            for iRow in range(nRows):
+                sentence.append(self.all_vocab[codes[iRow, iCols]])
+            sentences.append(sentence)
+
+        # covert_dict used save the concate word, save as:
+        # {(1,2,3):(prefix, concate_word)}
+        # (1,2,3): the 1st sentence, concate word start from 2ed index, end with 3rd index
+        covert_dict = {}
+        for sen_index, sen in enumerate(sentences):
+            long_words = ""
+            prefix = ""
+            continue_flag = False
+            start_word_index = 0
+            for word_index, word in enumerate(sen):
+
+                if word.endswith("@@"):
+                    if not continue_flag:
+                        start_word_index = word_index
+                        prefix = word
+                    word = word.split("@@")[0]
+                    long_words += word
+                    continue_flag = True
+                else:
+                    if continue_flag:
+                        long_words += word
+                        continue_flag = False
+                    if not continue_flag and len(long_words) != 0:
+                        covert_dict[(sen_index, start_word_index, word_index)] = (prefix, long_words)
+                        long_words = ""
+
+
+                # if self.IS_DIGIT.match(word):
+                #     print("dg", end=" ")
+                # elif word in ['<s>','</s>','<pad>','<unk>']:
+                #     print("sp", end=" ")
+                # elif word in "~!@#$%^&*()_+<>?:,./;’，。、‘：“《》？~！@#￥%……（）":
+                #     print("pu", end=" ")
+                # elif word in self.lan0_vocab:
+                #     print(self.params.id2lang[0], end=" ")
+                # elif word in self.lan1_vocab:
+                #     print(self.params.id2lang[1], end=" ")
+                # else:
+                #     print("UK", end=" ")
+            print()
+
+        print(sentences)
+
         return codes
