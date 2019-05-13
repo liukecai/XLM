@@ -175,20 +175,63 @@ def mytest20190512_select_word(lan_dict, word):
         return key, lan_dict[key][0][index_w]
 
 
-# https://www.cnblogs.com/feng18/p/5646925.html
-# sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
-# mytest20190508()
-# mytest20190509()
-lan0_dict, lan1_dict = mytest20190512()
-mytest20190512_num_covert_prob(lan0_dict, lan1_dict)
+def mytest20190513_multiprocess_load_data():
+    parser = get_parser()
+    params = parser.parse_args()
+    check_data_params(params)
 
-for _ in range(5):
-    for w in ["se", "al", "bl"]:
-        select_word, new_word = mytest20190512_select_word(lan0_dict, w)
-        print(select_word, " ", new_word)
+    from src.data.code_convertion import load_para_dict
+    from concurrent.futures import ProcessPoolExecutor
 
-    for w in ["我", "学", "水"]:
-        select_word, new_word = mytest20190512_select_word(lan1_dict, w)
-        print(select_word, " ", new_word)
+    lan0_para_dict_path = os.path.join(params.data_path,
+                                       "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[0]))
+    lan1_para_dict_path = os.path.join(params.data_path,
+                                       "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[1]))
+
+    lan0_dict = None
+    lan1_dict = None
+
+    # Need run with main
+    print("Start multi-process...")
+    with ProcessPoolExecutor() as executor:
+        results = executor.map(load_para_dict, [lan0_para_dict_path, lan1_para_dict_path])
+        results = list(results)
+        lan0_dict = results[0]
+        lan1_dict = results[1]
+
+    print("lan0 dict length: %d, lan1 dict length: %d" % (len(lan0_dict), len(lan1_dict)))
+
+    if lan0_dict.has_subtrie("s") or lan0_dict.has_key("s"):
+        print(lan0_dict.items("s"))
+        print(lan0_dict.items("sa"))
+        print(lan0_dict.items("se"))
 
     print()
+    if lan1_dict.has_subtrie("学") or lan1_dict.has_key("学"):
+        print(lan1_dict.items("学"))
+        print(lan1_dict.items("学生"))
+    return lan0_dict, lan1_dict
+
+
+if __name__ == "__main__":
+    # https://www.cnblogs.com/feng18/p/5646925.html
+    # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
+    # mytest20190508()
+    # mytest20190509()
+    # lan0_dict, lan1_dict = mytest20190512()
+    # mytest20190512_num_covert_prob(lan0_dict, lan1_dict)
+    #
+    # for _ in range(5):
+    #     for w in ["se", "al", "bl"]:
+    #         select_word, new_word = mytest20190512_select_word(lan0_dict, w)
+    #         print(select_word, " ", new_word)
+    #
+    #     for w in ["我", "学", "水"]:
+    #         select_word, new_word = mytest20190512_select_word(lan1_dict, w)
+    #         print(select_word, " ", new_word)
+    #
+    #     print()
+
+
+    # ProcessPoolExecutor need run with main
+    mytest20190513_multiprocess_load_data()
