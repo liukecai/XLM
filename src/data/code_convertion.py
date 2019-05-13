@@ -8,22 +8,25 @@
 import os
 import re
 import xlwt
+import pygtrie as trie
 from logging import getLogger
 
 logger = getLogger()
 
 def load_para_dict(filename):
-    para_dict = {}
+    # load dict to the trie
+    para_dict = trie.CharTrie()
     dict_file = open(filename, mode="r", encoding="UTF-8")
     lines = dict_file.readlines()
     for line in lines:
         line = line.strip()
         if len(line) != 0:
             tmp = line.split()
-            if tmp[0] in para_dict.keys():
-                para_dict[tmp[0]].append(tmp[1])
+            if para_dict.has_key(tmp[0]):
+                para_dict[tmp[0]][0].append(tmp[1])
+                para_dict[tmp[0]][1].append(int(tmp[2]))
             else:
-                para_dict[tmp[0]] = [tmp[1]]
+                para_dict[tmp[0]] = [[tmp[1]], [int(tmp[2])]]
     dict_file.close()
     logger.info("Read %d words from the dictionary file." % len(lines))
 
