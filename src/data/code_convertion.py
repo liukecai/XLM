@@ -62,17 +62,14 @@ class ConverterBPE2BPE():
         self.all_vocab = Dictionary.read_vocab(all_dict_path)
 
         lan0_para_dict_path = os.path.join(params.data_path,
-                                          "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[0]))
+                                          "dict.%s-%s.%s.a%s" % (params.langs[0], params.langs[1], params.langs[0], 100))
         lan1_para_dict_path = os.path.join(params.data_path,
-                                          "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[1]))
+                                          "dict.%s-%s.%s.a%s" % (params.langs[0], params.langs[1], params.langs[1], 100))
         assert os.path.isfile(lan0_para_dict_path) and os.path.isfile(lan1_para_dict_path)
         logger.info("Read parallel dictionary for language 0...")
+        self.dict_lan0 = load_para_dict(lan0_para_dict_path)
         logger.info("Read parallel dictionary for language 1...")
-        with ProcessPoolExecutor(max_workers=3) as executor:
-            results = executor.map(load_para_dict, [lan0_para_dict_path, lan1_para_dict_path])
-            results = list(results)
-            self.dict_lan0 = results[0]
-            self.dict_lan1 = results[1]
+        self.dict_lan1 = load_para_dict(lan1_para_dict_path)
 
         logger.info("Process parallel dictionary for language 0...")
         convert_number_to_prob(self.dict_lan0)
