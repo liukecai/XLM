@@ -11,6 +11,7 @@ import xlwt
 import numpy as np
 import pygtrie as trie
 from logging import getLogger
+from concurrent.futures import ProcessPoolExecutor
 
 logger = getLogger()
 
@@ -66,9 +67,17 @@ class ConverterBPE2BPE():
                                           "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[1]))
         assert os.path.isfile(lan0_para_dict_path) and os.path.isfile(lan1_para_dict_path)
         logger.info("Read parallel dictionary for language 0...")
-        # self.dict_lan0 = load_para_dict(lan0_para_dict_path)
         logger.info("Read parallel dictionary for language 1...")
-        # self.dict_lan1 = load_para_dict(lan1_para_dict_path)
+        with ProcessPoolExecutor(max_workers=3) as executor:
+            results = executor.map(load_para_dict, [lan0_para_dict_path, lan1_para_dict_path])
+            results = list(results)
+            self.dict_lan0 = results[0]
+            self.dict_lan1 = results[1]
+
+        logger.info("Process parallel dictionary for language 0...")
+        convert_number_to_prob(self.dict_lan0)
+        logger.info("Process parallel dictionary for language 1...")
+        convert_number_to_prob(self.dict_lan1)
 
         self.IS_DIGIT = re.compile(r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$')
 
