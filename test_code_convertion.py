@@ -8,6 +8,8 @@
 from src.data.dictionary import Dictionary
 from src.data.code_convertion import ConverterBPE2BPE
 from src.utils import bool_flag
+from src.data.code_convertion import load_para_dict, convert_number_to_prob
+from concurrent.futures import ProcessPoolExecutor
 import argparse
 import io
 import numpy as np
@@ -180,9 +182,6 @@ def mytest20190513_multiprocess_load_data():
     params = parser.parse_args()
     check_data_params(params)
 
-    from src.data.code_convertion import load_para_dict
-    from concurrent.futures import ProcessPoolExecutor
-
     lan0_para_dict_path = os.path.join(params.data_path,
                                        "dict.%s-%s.%s" % (params.langs[0], params.langs[1], params.langs[0]))
     lan1_para_dict_path = os.path.join(params.data_path,
@@ -193,7 +192,7 @@ def mytest20190513_multiprocess_load_data():
 
     # Need run with main
     print("Start multi-process...")
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=3) as executor:
         results = executor.map(load_para_dict, [lan0_para_dict_path, lan1_para_dict_path])
         results = list(results)
         lan0_dict = results[0]
@@ -219,19 +218,19 @@ if __name__ == "__main__":
     # mytest20190508()
     # mytest20190509()
     # lan0_dict, lan1_dict = mytest20190512()
-    # mytest20190512_num_covert_prob(lan0_dict, lan1_dict)
-    #
-    # for _ in range(5):
-    #     for w in ["se", "al", "bl"]:
-    #         select_word, new_word = mytest20190512_select_word(lan0_dict, w)
-    #         print(select_word, " ", new_word)
-    #
-    #     for w in ["我", "学", "水"]:
-    #         select_word, new_word = mytest20190512_select_word(lan1_dict, w)
-    #         print(select_word, " ", new_word)
-    #
-    #     print()
-
 
     # ProcessPoolExecutor need run with main
-    mytest20190513_multiprocess_load_data()
+    lan0_dict, lan1_dict = mytest20190513_multiprocess_load_data()
+    convert_number_to_prob(lan0_dict)
+    convert_number_to_prob(lan1_dict)
+
+    for _ in range(5):
+        for w in ["se", "al", "bl"]:
+            select_word, new_word = mytest20190512_select_word(lan0_dict, w)
+            print(select_word, " ", new_word)
+
+        for w in ["我", "学", "水"]:
+            select_word, new_word = mytest20190512_select_word(lan1_dict, w)
+            print(select_word, " ", new_word)
+
+        print()

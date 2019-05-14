@@ -8,6 +8,7 @@
 import os
 import re
 import xlwt
+import numpy as np
 import pygtrie as trie
 from logging import getLogger
 
@@ -31,6 +32,17 @@ def load_para_dict(filename):
     logger.info("Read %d words from the dictionary file." % len(lines))
 
     return para_dict
+
+
+def convert_number_to_prob(para_dict):
+    # from the trie covert the number to probability
+    for key in para_dict.keys():
+        assert len(para_dict[key][0]) == len(para_dict[key][1])
+        p = np.array(para_dict[key][1])
+        p = p / np.sum(p)
+        # softmax
+        p = np.exp(p) / np.sum(np.exp(p))
+        para_dict[key][1] = p
 
 
 class ConverterBPE2BPE():
