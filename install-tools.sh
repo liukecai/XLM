@@ -18,6 +18,8 @@ MOSES_DIR=$TOOLS_PATH/mosesdecoder
 FASTBPE_DIR=$TOOLS_PATH/fastBPE
 FASTBPE=$FASTBPE_DIR/fast
 WMT16_SCRIPTS=$TOOLS_PATH/wmt16-scripts
+FASTALIGN_DIR=$TOOLS_PATH/fast_align
+FASTALIGN=$FASTALIGN_DIR/build/fast_align
 
 # tools path
 mkdir -p $TOOLS_PATH
@@ -81,3 +83,20 @@ fi
 #   exit 1
 # fi
 # 
+
+# Download fast_align
+if [ ! -d "$FASTALIGN_DIR" ]; then
+  echo "Cloning fast_align from GitHub repository..."
+  git clone https://github.com/clab/fast_align.git
+fi
+
+# Compile fast_align
+if [ ! -f "$FASTALIGN" ]; then
+  echo "Compiling fast_align..."
+  cd fast_align
+  mkdir build
+  cd build
+  cmake ..
+  make
+  cd ../..
+fi
