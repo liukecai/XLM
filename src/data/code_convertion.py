@@ -47,10 +47,10 @@ def convert_number_to_prob(para_dict):
         para_dict[key][1] = p
 
 
-IS_DIGIT = re.compile(r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$')
+IS_DIGIT = re.compile(r'^[-+]?\d+\.?\d*|[-+]?\d+$')
 IS_ENGLISH = re.compile(r'^[a-zA-Z]+$')
 def determineWordType(word):
-    if IS_DIGIT.match(word) :
+    if IS_DIGIT.fullmatch(word) :
         return 'nu'
     elif IS_ENGLISH.match(word) :
         return 'en'
@@ -61,9 +61,8 @@ def list2words(inputTupleList):
     wordList = []
     cntList = []
     for word, wdCntList in inputTupleList:
-        for outputWord, count in zip(wdCntList[0], wdCntList[1]):
-            wordList.append(outputWord)
-            cntList.append(count)
+        wordList.extend(wdCntList[0])
+        cntList.extend(wdCntList[1])
     p1 = np.array(cntList)
     p1 = p1 / np.sum(p1)
     index_w = np.random.choice([x for x in range(len(wordList))], p=p1)
