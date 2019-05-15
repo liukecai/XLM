@@ -212,12 +212,26 @@ def mytest20190513_multiprocess_load_data():
     return lan0_dict, lan1_dict
 
 
+def mytest20190515_convertOneList2Lan():
+    parser = get_parser()
+    params = parser.parse_args()
+    check_data_params(params)
+    converter = ConverterBPE2BPE(params)
+    inputList = ['sin@@', 'gle', 'alter@@', 'red@@', 'red@@', 'ST@@', '能', '曾@@', 'able', '负@@', '载']
+    print(converter.convertOneList2Lan(inputList,'zh'))
+    print(converter.convertOneList2Lan(inputList, 'en'))
+    inputList = ['sin@@', 'gle', 'alter@@', 'red@@', 'red@@', 'stu@@', '能', '曾@@', 'able', '负@@', '载']
+    print(converter.convertOneList2Lan(inputList,'zh'))
+    print(converter.convertOneList2Lan(inputList, 'en'))
+
 if __name__ == "__main__":
     # https://www.cnblogs.com/feng18/p/5646925.html
     # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
     # mytest20190508()
     # mytest20190509()
     # lan0_dict, lan1_dict = mytest20190512()
+
+    mytest20190515_convertOneList2Lan()
 
     # ProcessPoolExecutor need run with main
     lan0_dict, lan1_dict = mytest20190513_multiprocess_load_data()

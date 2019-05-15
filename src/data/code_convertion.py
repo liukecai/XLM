@@ -6,6 +6,7 @@
 #
 
 import os
+import random
 import re
 import xlwt
 import numpy as np
@@ -46,6 +47,29 @@ def convert_number_to_prob(para_dict):
         para_dict[key][1] = p
 
 
+IS_DIGIT = re.compile(r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$')
+IS_ENGLISH = re.compile(r'^[a-zA-Z]+$')
+def determineWordType(word):
+    if IS_DIGIT.match(word) :
+        return 'nu'
+    elif IS_ENGLISH.match(word) :
+        return 'en'
+    return 'zh'
+
+
+def list2words(inputTupleList):
+    wordList = []
+    cntList = []
+    for word, wdCntList in inputTupleList:
+        for outputWord, count in zip(wdCntList[0], wdCntList[1]):
+            wordList.append(outputWord)
+            cntList.append(count)
+    p1 = np.array(cntList)
+    p1 = p1 / np.sum(p1)
+    index_w = np.random.choice([x for x in range(len(wordList))], p=p1)
+    return wordList[index_w]
+
+
 class ConverterBPE2BPE():
     def __init__(self, params):
         assert len(params.langs) == 2, "Need two languages"
@@ -71,12 +95,11 @@ class ConverterBPE2BPE():
         logger.info("Read parallel dictionary for language 1...")
         self.dict_lan1 = load_para_dict(lan1_para_dict_path)
 
-        logger.info("Process parallel dictionary for language 0...")
-        convert_number_to_prob(self.dict_lan0)
-        logger.info("Process parallel dictionary for language 1...")
-        convert_number_to_prob(self.dict_lan1)
+        # logger.info("Process parallel dictionary for language 0...")
+        # convert_number_to_prob(self.dict_lan0)
+        # logger.info("Process parallel dictionary for language 1...")
+        # convert_number_to_prob(self.dict_lan1)
 
-        self.IS_DIGIT = re.compile(r'^[-+]?[-0-9]\d*\.\d*|[-+]?\.?[0-9]\d*$')
 
     def saveCodesInCharsInExcel(self, codes, ofilename):
         writebook = xlwt.Workbook()
@@ -92,6 +115,77 @@ class ConverterBPE2BPE():
                 iColInExcel = iCol % 256
                 sheets[iData].write(iRow, iColInExcel, self.all_vocab[codes[iRow][iCol]])
         writebook.save(ofilename)
+
+
+    def convertOneList2Lan(self, inputList, lan):
+        iStart = 0
+        output = ""
+        preLan = None
+        if lan == 'en':
+            prefixTreeDict = self.dict_lan1
+        else:
+            prefixTreeDict = self.dict_lan0
+
+        while iStart < len(inputList):
+            iCurrent = iStart
+            prefix = ""
+            reCurrent = []
+            rePre = []
+            bEndWord = False
+
+            while iCurrent < len(inputList):
+                curWord = inputList[iCurrent]
+                if curWord.endswith("@@"):
+                    curWord = curWord.split("@@")[0]
+                else:
+                    bEndWord = True
+                wordType = determineWordType(curWord)
+                if wordType == 'nu' or wordType == lan:
+                    if len(reCurrent) > 0:
+                        output += list2words(reCurrent)
+                    if preLan != None and preLan != wordType:
+                        output += " "
+                    output += curWord
+                    if bEndWord == True:
+                        output += " "
+                    iStart = iCurrent + 1
+                    preLan = wordType
+                    break
+                if preLan != None and preLan != wordType:
+                    output += " "
+                preLan = wordType
+                prefix += curWord
+                rePre = reCurrent
+                if prefixTreeDict.has_key(prefix):
+                    reCurrent = prefixTreeDict.items(prefix)
+                    reCurrent = [ reCurrent[0] ]
+                elif prefixTreeDict.has_subtrie(prefix):
+                    reCurrent = prefixTreeDict.items(prefix)
+                else:
+                    reCurrent = []
+
+                if not bEndWord and len(reCurrent) > 0 :
+                    iCurrent += 1
+                    continue
+                if bEndWord and len(reCurrent) > 0 :
+                    output += list2words(reCurrent)
+                    output += " "
+                    iStart = iCurrent + 1
+                    break
+                elif len(rePre) > 0:
+                    output += list2words(rePre)
+                    output += " "
+                    iStart = iCurrent
+                    break
+                else:
+                    output += prefix
+                    output += " "
+                    iStart = iCurrent + 1
+                    break
+        output = output.strip().split()
+        output = " ".join(output)
+        return output
+
 
     def convertCodes2Lan(self, codes, lan):
         nRows, nCols = codes.shape
