@@ -136,6 +136,8 @@ class ConverterBPE2BPE():
                 curWord = inputList[iCurrent]
                 if curWord.endswith("@@"):
                     curWord = curWord.split("@@")[0]
+                    if iCurrent == len(inputList) - 1:
+                        bEndWord = True
                 else:
                     bEndWord = True
                 wordType = determineWordType(curWord)
