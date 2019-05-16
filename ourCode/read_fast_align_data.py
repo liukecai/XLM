@@ -14,7 +14,11 @@ if __name__ == "__main__":
     filelist = os.listdir(DATA_PATH)
     print("Porcess file list: %s" % filelist)
     srclist = [x for x in filelist if SRC in x]
+    srclist = sorted(srclist)
     tgtlist = [x for x in filelist if TGT in x]
+    tgtlist = sorted(tgtlist)
+    print("Porcess file list for source language: %s" % srclist)
+    print("Porcess file list for target language: %s" % tgtlist)
 
     all_src = open(os.path.join(SAVE_PATH, "all.%s" % SRC), mode="w", encoding="UTF-8")
     all_tgt = open(os.path.join(SAVE_PATH, "all.%s" % TGT), mode="w", encoding="UTF-8")

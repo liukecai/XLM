@@ -17,7 +17,7 @@ def concate(file1, file2, newfile=None):
     for line1, line2 in zip(lines1, lines2):
         if len(line1.strip()) == 0 or len(line2.strip()) == 0:
             continue
-        f3.write(line1[:-1])
+        f3.write(line1.strip())
         f3.write(" ||| ")
         f3.write(line2)
     
