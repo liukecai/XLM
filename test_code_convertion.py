@@ -224,6 +224,11 @@ def mytest20190515_convertOneList2Lan():
     print(converter.convertOneList2Lan(inputList,'zh'))
     print(converter.convertOneList2Lan(inputList, 'en'))
 
+    inputList = ['评定', '摘@@', '摘@@', '/', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@', '周@@']
+    print(converter.convertOneList2Lan(inputList, 'zh'))
+    print(converter.convertOneList2Lan(inputList, 'en'))
+
+
 if __name__ == "__main__":
     # https://www.cnblogs.com/feng18/p/5646925.html
     # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
