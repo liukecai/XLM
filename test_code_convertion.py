@@ -31,6 +31,9 @@ def get_parser():
 
     parser.add_argument("--data_file_to_convert", type=str, default="",
                         help="The name of the data file to be converted.")
+
+    parser.add_argument("--debug_dict", type=bool_flag, default=False,
+                        help="Use smaller dict for debugging purpose.")
     return parser
 
 

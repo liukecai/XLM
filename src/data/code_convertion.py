@@ -93,6 +93,9 @@ class ConverterBPE2BPE():
                                           "dict.%s-%s.%s.a%s" % (params.langs[0], params.langs[1], params.langs[0], 100))
         lan1_para_dict_path = os.path.join(params.data_path,
                                           "dict.%s-%s.%s.a%s" % (params.langs[0], params.langs[1], params.langs[1], 100))
+        if params.debug_dict:
+            lan0_para_dict_path = lan0_para_dict_path.replace('100', '1000')
+            lan1_para_dict_path = lan1_para_dict_path.replace('100', '1000')
         assert os.path.isfile(lan0_para_dict_path) and os.path.isfile(lan1_para_dict_path)
         logger.info("Read parallel dictionary for language 0...")
         self.dict_lan0 = load_para_dict(lan0_para_dict_path)

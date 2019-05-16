@@ -200,6 +200,8 @@ def get_parser():
     # avoid degenerate
     parser.add_argument("--anti_degenerate", type=bool_flag, default=False,
                         help="Use this way for avoid degenerate")
+    parser.add_argument("--debug_dict", type=bool_flag, default=False,
+                        help="Use smaller dict for debugging purpose.")
     return parser
 
 
