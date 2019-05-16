@@ -5,12 +5,14 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import fastBPE
 import os
 import random
 import re
 import xlwt
 import numpy as np
 import pygtrie as trie
+from .dictionary import Dictionary, BOS_WORD, EOS_WORD, PAD_WORD, UNK_WORD
 from logging import getLogger
 from concurrent.futures import ProcessPoolExecutor
 
@@ -76,13 +78,16 @@ class ConverterBPE2BPE():
         lan1_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[1])
         all_dict_path = os.path.join(params.data_path, "vocab.%s-%s" % (params.langs[0], params.langs[1]))
         assert os.path.isfile(lan0_dict_path) and os.path.isfile(lan1_dict_path) and os.path.isfile(all_dict_path)
-        from .dictionary import Dictionary
         logger.info("Read lan0 monolingual vocabulary...")
         self.lan0_vocab = Dictionary.read_vocab(lan0_dict_path)
         logger.info("Read lan1 monolingual vocabulary...")
         self.lan1_vocab = Dictionary.read_vocab(lan1_dict_path)
         logger.info("Read monolingual vocabulary for both languages...")
         self.all_vocab = Dictionary.read_vocab(all_dict_path)
+        self.code_BOS_WORD = self.all_vocab.index(BOS_WORD)
+        self.code_EOS_WORD = self.all_vocab.index(EOS_WORD)
+        self.code_PAD_WORD = self.all_vocab.index(PAD_WORD)
+        self.code_UNK_WORD = self.all_vocab.index(UNK_WORD)
 
         lan0_para_dict_path = os.path.join(params.data_path,
                                           "dict.%s-%s.%s.a%s" % (params.langs[0], params.langs[1], params.langs[0], 100))
@@ -93,6 +98,9 @@ class ConverterBPE2BPE():
         self.dict_lan0 = load_para_dict(lan0_para_dict_path)
         logger.info("Read parallel dictionary for language 1...")
         self.dict_lan1 = load_para_dict(lan1_para_dict_path)
+
+        codes_path = os.path.join(params.data_path, "codes")
+        self.bpe = fastBPE.fastBPE(codes_path, all_dict_path)
 
         # logger.info("Process parallel dictionary for language 0...")
         # convert_number_to_prob(self.dict_lan0)
@@ -188,54 +196,19 @@ class ConverterBPE2BPE():
 
     def convertCodes2Lan(self, codes, lan):
         nRows, nCols = codes.shape
-        sentences = []
+        out_sentences = []
         for iCols in range(nCols):
             sentence = []
             for iRow in range(nRows):
-                sentence.append(self.all_vocab[codes[iRow, iCols]])
-            sentences.append(sentence)
+                word_code = codes[iRow, iCols]
+                #if word_code == self.code_PAD_WORD or word_code == self.code_EOS_WORD or word_code == self.code_UNK_WORD or word_code == self.code_BOS_WORD :
+                #    continue
+                sentence.append(self.all_vocab[word_code])
+            out_sentence = self.convertOneList2Lan(sentence, lan)
+            print(sentence)
+            print(out_sentence)
+            out_sentences.append(out_sentence)
 
-        # covert_dict used save the concate word, save as:
-        # {(1,2,3):(prefix, concate_word)}
-        # (1,2,3): the 1st sentence, concate word start from 2ed index, end with 3rd index
-        covert_dict = {}
-        for sen_index, sen in enumerate(sentences):
-            long_words = ""
-            prefix = ""
-            continue_flag = False
-            start_word_index = 0
-            for word_index, word in enumerate(sen):
-
-                if word.endswith("@@"):
-                    if not continue_flag:
-                        start_word_index = word_index
-                        prefix = word
-                    word = word.split("@@")[0]
-                    long_words += word
-                    continue_flag = True
-                else:
-                    if continue_flag:
-                        long_words += word
-                        continue_flag = False
-                    if not continue_flag and len(long_words) != 0:
-                        covert_dict[(sen_index, start_word_index, word_index)] = (prefix, long_words)
-                        long_words = ""
-
-
-                # if self.IS_DIGIT.match(word):
-                #     print("dg", end=" ")
-                # elif word in ['<s>','</s>','<pad>','<unk>']:
-                #     print("sp", end=" ")
-                # elif word in "~!@#$%^&*()_+<>?:,./;’，。、‘：“《》？~！@#￥%……（）":
-                #     print("pu", end=" ")
-                # elif word in self.lan0_vocab:
-                #     print(self.params.id2lang[0], end=" ")
-                # elif word in self.lan1_vocab:
-                #     print(self.params.id2lang[1], end=" ")
-                # else:
-                #     print("UK", end=" ")
-            print()
-
-        print(sentences)
+        re = self.bpe.apply(out_sentences)
 
         return codes
