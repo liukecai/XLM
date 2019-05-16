@@ -232,24 +232,9 @@ def mytest20190515_convertOneList2Lan():
 if __name__ == "__main__":
     # https://www.cnblogs.com/feng18/p/5646925.html
     # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
-    # mytest20190508()
+    mytest20190508()
     # mytest20190509()
     # lan0_dict, lan1_dict = mytest20190512()
 
-    mytest20190515_convertOneList2Lan()
+    # mytest20190515_convertOneList2Lan()
 
-    # ProcessPoolExecutor need run with main
-    lan0_dict, lan1_dict = mytest20190513_multiprocess_load_data()
-    convert_number_to_prob(lan0_dict)
-    convert_number_to_prob(lan1_dict)
-
-    for _ in range(5):
-        for w in ["se", "al", "bl"]:
-            select_word, new_word = mytest20190512_select_word(lan0_dict, w)
-            print(select_word, " ", new_word)
-
-        for w in ["我", "学", "水"]:
-            select_word, new_word = mytest20190512_select_word(lan1_dict, w)
-            print(select_word, " ", new_word)
-
-        print()
