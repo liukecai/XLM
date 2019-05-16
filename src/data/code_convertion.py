@@ -203,8 +203,8 @@ class ConverterBPE2BPE():
             sentence = []
             for iRow in range(nRows):
                 word_code = codes[iRow, iCols]
-                #if word_code == self.code_PAD_WORD or word_code == self.code_EOS_WORD or word_code == self.code_UNK_WORD or word_code == self.code_BOS_WORD :
-                #    continue
+                if word_code == self.code_PAD_WORD or word_code == self.code_EOS_WORD or word_code == self.code_UNK_WORD or word_code == self.code_BOS_WORD :
+                    continue
                 sentence.append(self.all_vocab[word_code])
             out_sentence = self.convertOneList2Lan(sentence, lan)
             print(sentence)
