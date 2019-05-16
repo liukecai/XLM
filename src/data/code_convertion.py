@@ -210,10 +210,24 @@ class ConverterBPE2BPE():
                     continue
                 sentence.append(self.all_vocab[word_code])
             out_sentence = self.convertOneList2Lan(sentence, lan)
-            print(sentence)
-            print(out_sentence)
+            # print(sentence)
+            # print(out_sentence)
             out_sentences.append(out_sentence)
 
-        re = self.bpe.apply(out_sentences)
+        bpe_out_sentences = self.bpe.apply(out_sentences)
+        out_codes = np.zeros((nRows, nCols))
+        for iCols in range(nCols):
+            sentence = bpe_out_sentences[iCols].split(' ')
+            iSentence = 0
+            for iRow in range(nRows):
+                word_code = codes[iRow, iCols]
+                if word_code == self.code_PAD_WORD or word_code == self.code_EOS_WORD or word_code == self.code_UNK_WORD or word_code == self.code_BOS_WORD :
+                    out_codes[iRow, iCols] = word_code
+                    continue
+                if iSentence < len(sentence) :
+                    out_codes[iRow, iCols] = self.all_vocab.index(sentence[iSentence])
+                    iSentence += 1
+                else :
+                    out_codes[iRow, iCols] = self.code_PAD_WORD
 
-        return codes
+        return out_codes
