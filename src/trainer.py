@@ -833,9 +833,9 @@ class EncDecTrainer(Trainer):
             self.encoder.train()
             self.decoder.train()
 
-        if self.params.anti_degenerate:
-            x2 = self.converter.convertCodes2Lan(x2.cpu().numpy(), self.params.id2lang[lang2_id])
-            x2 = torch.cuda.LongTensor(x2)
+            if self.params.anti_degenerate:
+                x2 = self.converter.convertCodes2Lan(x2.cpu().numpy(), self.params.id2lang[lang2_id])
+                x2 = torch.cuda.LongTensor(x2)
 
         # encode generate sentence
         enc2 = self.encoder('fwd', x=x2, lengths=len2, langs=langs2, causal=False)
