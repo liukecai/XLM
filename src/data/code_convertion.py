@@ -247,3 +247,7 @@ class ConverterBPE2BPE():
         self.changed_word_counter += diff_count
 
         return out_codes
+
+    def resetCounters(self) :
+        self.changed_word_counter = 0
+        self.all_word_counter = 0

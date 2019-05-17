@@ -183,9 +183,11 @@ class Trainer(object):
         self.last_time = new_time
 
         if self.params.anti_degenerate:
-            s_convert = " || Converter Change:All = {:}:{:}".format(
+            s_convert = " || Converter Changes:All:% = {:}:{:}:{:.4f}".format(
                 self.converter.changed_word_counter,
-                self.converter.all_word_counter)
+                self.converter.all_word_counter,
+                self.converter.changed_word_counter*1.0/self.converter.all_word_counter)
+            self.converter.resetCounters()
             logger.info(s_iter + s_speed + s_stat + s_lr + s_convert)
         else:
             # log speed + stats + learning rate
