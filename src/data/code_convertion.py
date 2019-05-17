@@ -105,6 +105,9 @@ class ConverterBPE2BPE():
         codes_path = os.path.join(params.data_path, "codes")
         self.bpe = fastBPE.fastBPE(codes_path, all_dict_path)
 
+        self.all_word_counter = 0
+        self.changed_word_counter = 0
+
         # logger.info("Process parallel dictionary for language 0...")
         # convert_number_to_prob(self.dict_lan0)
         # logger.info("Process parallel dictionary for language 1...")
@@ -201,6 +204,10 @@ class ConverterBPE2BPE():
 
     def convertCodes2Lan(self, codes, lan):
         nRows, nCols = codes.shape
+
+        all_words = nRows * nCols
+        self.all_word_counter += all_words
+
         out_sentences = []
         for iCols in range(nCols):
             sentence = []
@@ -229,5 +236,9 @@ class ConverterBPE2BPE():
                     iSentence += 1
                 else :
                     out_codes[iRow, iCols] = self.code_PAD_WORD
+
+        same_count = np.array(codes == out_codes)
+        diff_count = all_words - np.sum(same_count)
+        self.changed_word_counter += diff_count
 
         return out_codes
