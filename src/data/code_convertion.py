@@ -73,16 +73,17 @@ def list2words(inputTupleList):
 
 class ConverterBPE2BPE():
     def __init__(self, params):
+        logger.info("")
         assert len(params.langs) == 2, "Need two languages"
         lan0_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[0])
         lan1_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[1])
         all_dict_path = os.path.join(params.data_path, "vocab.%s-%s" % (params.langs[0], params.langs[1]))
         assert os.path.isfile(lan0_dict_path) and os.path.isfile(lan1_dict_path) and os.path.isfile(all_dict_path)
-        logger.info("Read lan0 monolingual vocabulary...")
+        logger.info("Converter: Read %s monolingual vocabulary..." % params.id2lang[0])
         self.lan0_vocab = Dictionary.read_vocab(lan0_dict_path)
-        logger.info("Read lan1 monolingual vocabulary...")
+        logger.info("Converter: Read %s monolingual vocabulary..." % params.id2lang[1])
         self.lan1_vocab = Dictionary.read_vocab(lan1_dict_path)
-        logger.info("Read monolingual vocabulary for both languages...")
+        logger.info("Converter: Read monolingual vocabulary for both languages...")
         self.all_vocab = Dictionary.read_vocab(all_dict_path)
         self.code_BOS_WORD = self.all_vocab.index(BOS_WORD)
         self.code_EOS_WORD = self.all_vocab.index(EOS_WORD)
@@ -97,11 +98,12 @@ class ConverterBPE2BPE():
             lan0_para_dict_path = lan0_para_dict_path.replace('100', '1000')
             lan1_para_dict_path = lan1_para_dict_path.replace('100', '1000')
         assert os.path.isfile(lan0_para_dict_path) and os.path.isfile(lan1_para_dict_path)
-        logger.info("Read parallel dictionary for language 0...")
+        logger.info("Converter: Read parallel dictionary for language %s..." % params.langs[0])
         self.dict_lan0 = load_para_dict(lan0_para_dict_path)
-        logger.info("Read parallel dictionary for language 1...")
+        logger.info("Converter: Read parallel dictionary for language %s..." % params.langs[1])
         self.dict_lan1 = load_para_dict(lan1_para_dict_path)
 
+        logger.info("Converter: Loading bpe...")
         codes_path = os.path.join(params.data_path, "codes")
         self.bpe = fastBPE.fastBPE(codes_path, all_dict_path)
 
@@ -112,6 +114,8 @@ class ConverterBPE2BPE():
         # convert_number_to_prob(self.dict_lan0)
         # logger.info("Process parallel dictionary for language 1...")
         # convert_number_to_prob(self.dict_lan1)
+
+        logger.info("")
 
 
     def saveCodesInCharsInExcel(self, codes, ofilename):
