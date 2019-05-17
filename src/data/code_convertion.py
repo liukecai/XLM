@@ -215,7 +215,7 @@ class ConverterBPE2BPE():
             out_sentences.append(out_sentence)
 
         bpe_out_sentences = self.bpe.apply(out_sentences)
-        out_codes = np.zeros((nRows, nCols))
+        out_codes = np.zeros((nRows, nCols), np.int32)
         for iCols in range(nCols):
             sentence = bpe_out_sentences[iCols].split(' ')
             iSentence = 0
