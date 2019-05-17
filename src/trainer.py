@@ -16,6 +16,7 @@ from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
 from apex.fp16_utils import FP16_Optimizer
 
+from .data.code_convertion import ConverterBPE2BPE
 from .utils import get_optimizer, to_cuda, concat_batches
 from .utils import parse_lambda_config, update_lambdas
 
@@ -722,6 +723,10 @@ class EncDecTrainer(Trainer):
             'decoder': self.get_optimizer_fp('decoder'),
         }
 
+        # converter
+        if params.anti_degenerate:
+            self.converter = ConverterBPE2BPE(params)
+
         super().__init__(data, params)
 
     def mt_step(self, lang1, lang2, lambda_coeff):
@@ -819,6 +824,10 @@ class EncDecTrainer(Trainer):
             # training mode
             self.encoder.train()
             self.decoder.train()
+
+        if self.params.anti_degenerate:
+            x2 = self.converter.convertCodes2Lan(x2.cpu().numpy(), self.params.id2lang[lang2_id])
+            x2 = torch.cuda.LongTensor(x2)
 
         # encode generate sentence
         enc2 = self.encoder('fwd', x=x2, lengths=len2, langs=langs2, causal=False)
