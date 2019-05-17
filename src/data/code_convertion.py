@@ -73,6 +73,7 @@ def list2words(inputTupleList):
 
 class ConverterBPE2BPE():
     def __init__(self, params):
+        self.params = params
         logger.info("")
         assert len(params.langs) == 2, "Need two languages"
         lan0_dict_path = os.path.join(params.data_path, "vocab.%s" % params.langs[0])
@@ -138,7 +139,7 @@ class ConverterBPE2BPE():
         iStart = 0
         output = ""
         preLan = None
-        if lan == 'en':
+        if lan == self.params.langs[0]:
             prefixTreeDict = self.dict_lan1
         else:
             prefixTreeDict = self.dict_lan0
