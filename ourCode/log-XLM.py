@@ -27,11 +27,28 @@ python log-XLM.py --file run-20190423-1131-XLM-mlm_mlm-unsupervised-enfr.log --l
 python log-XLM.py --file run-20190424-1532-XLM-mlm_mlm-unsupervised-enzh.log --lang1 en --lang2 zh --mt True --bleu True
 python log-XLM.py --file run-20190424-1532-XLM-mlm_mlm-unsupervised-enzh.log --lang1 en --lang2 zh --mt True --acc True
 python log-XLM.py --file run-20190424-1532-XLM-mlm_mlm-unsupervised-enzh.log --lang1 en --lang2 zh --mt True --ppl True
+
+python log-XLM.py --file MT-mlm-20190512-0204-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --bleu true --xls true
+python log-XLM.py --file MT-mlm-20190512-0204-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --acc true --plot true
+python log-XLM.py --file MT-mlm-20190512-0204-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --ppl true --plot true
+
+python log-XLM.py --file MTC-mlm-20190518-0106-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --bleu true --xls true
+python log-XLM.py --file MTC-mlm-20190518-0106-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --acc true --plot true
+python log-XLM.py --file MTC-mlm-20190518-0106-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --ppl true  --plot true
+
+python log-XLM.py --file UMT-mlm-20190518-0100-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --bleu true --plot true
+python log-XLM.py --file UMT-mlm-20190518-0100-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --acc true --plot true
+python log-XLM.py --file UMT-mlm-20190518-0100-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --ppl true  --plot true
+
+python log-XLM.py --file UMTC-mlm-20190518-0103-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --bleu true --xls true
+python log-XLM.py --file UMTC-mlm-20190518-0103-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --acc true --plot true
+python log-XLM.py --file UMTC-mlm-20190518-0103-enzh-l6_h8_e107_bs16_t1000.log --lang1 en --lang2 zh --mt true --ppl true --plot true
 '''
 
 import matplotlib.pyplot as plt
 import re
 import json
+import xlwt
 import argparse
 
 LOG = re.compile("(?<= __log__:).+")
@@ -65,6 +82,8 @@ def get_parse():
     parser.add_argument("--bleu", type=bool_flag, default=False, help="Show the BLEU plot")
     parser.add_argument("--acc", type=bool_flag, default=False, help="Show the acc plot")
 
+    parser.add_argument("--plot", type=bool_flag, default=False, help="Show plot")
+    parser.add_argument("--xls", type=bool_flag, default=False, help="Save the bleu to xls file")
     return parser
 
 def check_params(params):
@@ -123,6 +142,10 @@ def check_params(params):
         tmp_bleu.append("test_%s-%s_mt_bleu" % (params.lang1, params.lang2))
         tmp_bleu.append("test_%s-%s_mt_bleu" % (params.lang2, params.lang1))
         plot_dict["bleu"] = tmp_bleu
+
+        if (params.xls):
+            saved_file = params.file.replace(".log", ".xls")
+            params.saved_file = saved_file
 
     return plot_dict
 
@@ -194,7 +217,33 @@ def line_chart(data, params, plot_dict):
             plt.plot(epoches, accs[a], label=a)
 
     plt.legend(loc=0)
+    plt.grid()
     plt.show()
+
+
+def save_bleu(data, params, plot_dict):
+    epoches = []
+    bleus = {}
+    for b in plot_dict["bleu"]:
+        bleus[b] = []
+
+    for d in data:
+        epoches.append(d["epoch"])
+        for b in plot_dict["bleu"]:
+            bleus[b].append(d[b])
+    
+    writebook = xlwt.Workbook(encoding = 'utf-8')
+    sheet = writebook.add_sheet('bleu')
+
+    i = 0
+    for k, v in bleus.items():
+        sheet.write(0, i, k)
+        for row, ele in enumerate(v):
+            sheet.write(row+1, i, float(ele))
+        i += 1
+
+    writebook.save(params.saved_file)
+    print("Saved bleu in %s" % params.saved_file)
 
 
 if __name__=="__main__":
@@ -229,4 +278,11 @@ if __name__=="__main__":
                 print("ERROR: '%s' not in log, please check parameters" % a)
                 exit(1)
 
-    line_chart(data, params, plot_dict)
+    if (params.plot):
+        line_chart(data, params, plot_dict)
+
+    if (params.xls):
+        if (not params.bleu):
+            print("Error: Only save bleu, need set bleu is True.")
+            exit(1)
+        save_bleu(data, params, plot_dict)
