@@ -76,13 +76,16 @@ if ! ls $TOOLS_PATH/stanford-segmenter-* 1> /dev/null 2>&1; then
   exit 1
 fi
 
-# # Thai tokenizer
-# if ! python -c 'import pkgutil; exit(not pkgutil.find_loader("pythainlp"))'; then
-#   echo "pythainlp package not found in python"
-#   echo "Please install pythainlp (pip install pythainlp)"
-#   exit 1
-# fi
-# 
+# Thai tokenizer
+if ! python -c 'import pkgutil; exit(not pkgutil.find_loader("pythainlp"))'; then
+  pip install pythainlp -i https://pypi.tuna.tsinghua.edu.cn/simple
+  if ! python -c 'import pkgutil; exit(not pkgutil.find_loader("pythainlp"))'; then
+    echo "pythainlp package not found in python"
+    echo "Please install pythainlp (pip install pythainlp)"
+    exit 1
+  fi
+fi
+
 
 # Download fast_align
 if [ ! -d "$FASTALIGN_DIR" ]; then
