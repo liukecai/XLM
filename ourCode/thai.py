@@ -18,7 +18,7 @@ def segment_and_vocab(read_file, write_file):
     counter = Counter()
     count = 0
     for sentence in sentences.readlines():
-        word_list = word_tokenize(sentence, keep_whitespace=False)
+        word_list = word_tokenize(sentence, whitespaces=False)
         sentence_seg.write(" ".join(word_list))
         counter.update(word_list)
 

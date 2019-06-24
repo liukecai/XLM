@@ -62,7 +62,7 @@ SEGMENTER=$SEGMENTER_DIR/segment.sh
 WIKI_EXTRACTOR=$TOOLS_PATH/wikiextractor/WikiExtractor.py
 
 # Thai process script
-PY_THAI=ourCode/thai.py
+PY_THAI=$MAIN_PATH/ourCode/thai.py
 
 # raw and tokenized files
 SRC_RAW=$MONO_PATH/$SRC/all.$SRC
@@ -135,16 +135,24 @@ fi
 
 
 # decompress monolingual data
-for FILENAME in $SRC/thwiki*bz2; do
+for FILENAME in thwiki*bz2; do
   OUTPUT="${FILENAME::-8}"
-  if [ ! -f "$OUTPUT" ]; then
+  if [ ! -d "$OUTPUT" ]; then
     echo "Decompressing $FILENAME..."
     $WIKI_EXTRACTOR thwiki-20190601-pages-articles-multistream.xml.bz2 -o thwiki-20190601-pages-articles-multistream
-    python $PY_THAI extract
+
   else
     echo "$OUTPUT already decompressed."
   fi
 done
+
+if [ ! -f "wiki.sent.seg.th" ]; then
+    python $PY_THAI extract
+else
+    echo "wiki file already extract."
+fi
+
+cd $MONO_PATH
 
 # concatenate monolingual data files
 if ! [[ -f "$SRC_RAW" ]]; then
@@ -265,8 +273,8 @@ $FASTBPE applybpe $PARA_TGT_TEST_BPE  $PARA_TGT_TEST_SEG  $BPE_CODES $TGT_VOCAB
 
 echo "Binarizing data..."
 rm -f $PARA_SRC_TRAIN_BPE.pth $PARA_TGT_TRAIN_BPE.pth $PARA_SRC_VALID_BPE.pth $PARA_TGT_VALID_BPE.pth $PARA_SRC_TEST_BPE.pth $PARA_TGT_TEST_BPE.pth
-$MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_SRC_TRAIN_BPE
-$MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_TGT_TRAIN_BPE
+# $MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_SRC_TRAIN_BPE
+# $MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_TGT_TRAIN_BPE
 $MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_SRC_VALID_BPE
 $MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_TGT_VALID_BPE
 $MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_SRC_TEST_BPE
@@ -296,9 +304,9 @@ echo "    $TGT: $TGT_VALID_BPE.pth"
 echo "Monolingual test data:"
 echo "    $SRC: $SRC_TEST_BPE.pth"
 echo "    $TGT: $TGT_TEST_BPE.pth"
-echo "Parallel training data:"
-echo "    $SRC: $PARA_SRC_TRAIN_BPE.pth"
-echo "    $TGT: $PARA_TGT_TRAIN_BPE.pth"
+# echo "Parallel training data:"
+# echo "    $SRC: $PARA_SRC_TRAIN_BPE.pth"
+# echo "    $TGT: $PARA_TGT_TRAIN_BPE.pth"
 echo "Parallel validation data:"
 echo "    $SRC: $PARA_SRC_VALID_BPE.pth"
 echo "    $TGT: $PARA_TGT_VALID_BPE.pth"
