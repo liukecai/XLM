@@ -16,7 +16,7 @@ N_MONO=5000000  # number of monolingual sentences for each language
 CODES=60000     # number of BPE codes
 N_THREADS=24    # number of threads in data preprocessing
 
-SRC=en
+SRC=th
 TGT=zh
 
 #
@@ -58,6 +58,12 @@ FASTBPE=$TOOLS_PATH/fastBPE/fast
 SEGMENTER_DIR=$TOOLS_PATH/stanford-segmenter-*
 SEGMENTER=$SEGMENTER_DIR/segment.sh
 
+# WikiExtractor
+WIKI_EXTRACTOR=$TOOLS_PATH/wikiextractor/WikiExtractor.py
+
+# Thai process script
+PY_THAI=ourCode/thai.py
+
 # raw and tokenized files
 SRC_RAW=$MONO_PATH/$SRC/all.$SRC
 TGT_RAW=$MONO_PATH/$TGT/all.$TGT
@@ -88,21 +94,26 @@ PARA_TGT_TEST_BPE=$PROC_PATH/test.$SRC-$TGT.$TGT
 
 # train / valid / test file raw data
 unset PARA_SRC_TRAIN PARA_TGT_TRAIN PARA_SRC_VALID PARA_TGT_VALID PARA_SRC_TEST PARA_TGT_TEST
-if [ "$SRC" == "en" -a "$TGT" == "zh" ]; then
+if [ "$SRC" == "th" -a "$TGT" == "zh" ]; then
   # PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.txt
   # PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.txt
   # Use 100,000 lines of training data.
-  PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.shuffle.txt10
-  PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.shuffle.txt10
+  # PARA_SRC_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_en.tok.shuffle.txt10
+  # PARA_TGT_TRAIN=$PARA_PATH/$SRC-$TGT/casia2015_zh.seg.shuffle.txt10
   # TODO: Add code in the script to do the segmentation automatically.
   # CMD:  segment.sh ctb newsdev2017-zhen-src.zh UTF-8 0 > newsdev2017-zhen-src.seg.zh
   #       segment.sh ctb newstest2017-zhen-src.zh UTF-8 0 > newstest2017-zhen-src.seg.zh
-  PARA_SRC_VALID=$PARA_PATH/dev/newsdev2017-zhen-ref.en
-  PARA_TGT_VALID=$PARA_PATH/dev/newsdev2017-zhen-src.zh
-  PARA_TGT_VALID_SEG=$PARA_PATH/dev/newsdev2017-zhen-src.seg.zh
-  PARA_SRC_TEST=$PARA_PATH/dev/newstest2017-zhen-ref.en
-  PARA_TGT_TEST=$PARA_PATH/dev/newstest2017-zhen-src.zh
-  PARA_TGT_TEST_SEG=$PARA_PATH/dev/newstest2017-zhen-src.seg.zh
+  PARA_SRC_VALID=$PARA_PATH/$SRC-$TGT/ALT_valid.$SRC
+  PARA_SRC_VALID_SEG=$PARA_PATH/$SRC-$TGT/ALT_valid.seg.$SRC
+
+  PARA_TGT_VALID=$PARA_PATH/$SRC-$TGT/ALT_valid.$TGT
+  PARA_TGT_VALID_SEG=$PARA_PATH/$SRC-$TGT/ALT_valid.seg.$TGT
+
+  PARA_SRC_TEST=$PARA_PATH/$SRC-$TGT/ALT_test.$SRC
+  PARA_SRC_TEST_SEG=$PARA_PATH/$SRC-$TGT/ALT_test.seg.$SRC
+
+  PARA_TGT_TEST=$PARA_PATH/$SRC-$TGT/ALT_test.$TGT
+  PARA_TGT_TEST_SEG=$PARA_PATH/$SRC-$TGT/ALT_test.seg.$TGT
 fi
 
 # install tools
@@ -115,12 +126,21 @@ fi
 
 cd $MONO_PATH
 
+if [ "$SRC" == "th" ]; then
+    echo "Downloading Thai monolingual data..."
+    mkdir -p $MONO_PATH/$SRC
+    cd $MONO_PATH/$SRC
+    wget -c https://dumps.wikimedia.org/thwiki/20190601/thwiki-20190601-pages-articles-multistream.xml.bz2
+fi
+
+
 # decompress monolingual data
-for FILENAME in $SRC/news*gz; do
-  OUTPUT="${FILENAME::-3}"
+for FILENAME in $SRC/thwiki*bz2; do
+  OUTPUT="${FILENAME::-8}"
   if [ ! -f "$OUTPUT" ]; then
     echo "Decompressing $FILENAME..."
-    gunzip -k $FILENAME
+    $WIKI_EXTRACTOR thwiki-20190601-pages-articles-multistream.xml.bz2 -o thwiki-20190601-pages-articles-multistream
+    python $PY_THAI extract
   else
     echo "$OUTPUT already decompressed."
   fi
@@ -129,7 +149,7 @@ done
 # concatenate monolingual data files
 if ! [[ -f "$SRC_RAW" ]]; then
   echo "Concatenating $SRC monolingual data..."
-  cat $(ls $SRC/news*$SRC* | grep -v gz) | head -n $N_MONO > $SRC_RAW
+  cat $SRC/wiki.sent.seg.th | head -n $N_MONO > $SRC_RAW
 fi
 if ! [[ -f "$TGT_RAW" ]]; then
   echo "Concatenating $TGT monolingual data..."
@@ -142,8 +162,8 @@ echo "$TGT monolingual data concatenated in: $TGT_RAW"
 # if ! [[ "$(wc -l < $SRC_RAW)" -eq "$N_MONO" ]]; then echo "ERROR: Number of lines does not match! Be sure you have $N_MONO sentences in your $SRC monolingual data."; exit; fi
 # if ! [[ "$(wc -l < $TGT_RAW)" -eq "$N_MONO" ]]; then echo "ERROR: Number of lines does not match! Be sure you have $N_MONO sentences in your $TGT monolingual data."; exit; fi
 
-SRC_PREPROCESSING="$REPLACE_UNICODE_PUNCT | $NORM_PUNC -l $SRC | $REM_NON_PRINT_CHAR | $TOKENIZER -l $SRC -no-escape -threads $N_THREADS"
-TGT_PREPROCESSING="$REPLACE_UNICODE_PUNCT | $NORM_PUNC -l $TGT | $REM_NON_PRINT_CHAR | $TOKENIZER -l $TGT -no-escape -threads $N_THREADS"
+SRC_PREPROCESSING="$NORM_PUNC -l $SRC | $REM_NON_PRINT_CHAR | $TOKENIZER -l $SRC -no-escape -threads $N_THREADS"
+TGT_PREPROCESSING="$NORM_PUNC -l $TGT | $REM_NON_PRINT_CHAR | $TOKENIZER -l $TGT -no-escape -threads $N_THREADS"
 
 
 # tokenize data
@@ -227,34 +247,20 @@ echo "$TGT binarized data in: $TGT_TRAIN_BPE.pth"
 
 cd $PARA_PATH
 
-echo "Downloading parallel data..."
-wget -c http://data.statmt.org/wmt18/translation-task/dev.tgz
-
-echo "Extracting parallel data..."
-tar -xzf dev.tgz
-
-# check valid and test files are here
-if ! [[ -f "$PARA_SRC_VALID.sgm" ]]; then echo "$PARA_SRC_VALID.sgm is not found!"; exit; fi
-if ! [[ -f "$PARA_TGT_VALID.sgm" ]]; then echo "$PARA_TGT_VALID.sgm is not found!"; exit; fi
-if ! [[ -f "$PARA_SRC_TEST.sgm" ]];  then echo "$PARA_SRC_TEST.sgm is not found!";  exit; fi
-if ! [[ -f "$PARA_TGT_TEST.sgm" ]];  then echo "$PARA_TGT_TEST.sgm is not found!";  exit; fi
-
-echo "Tokenizing valid and test data..."
-eval "$INPUT_FROM_SGM < $PARA_SRC_VALID.sgm | $SRC_PREPROCESSING > $PARA_SRC_VALID"
-eval "$INPUT_FROM_SGM < $PARA_TGT_VALID.sgm | $TGT_PREPROCESSING > $PARA_TGT_VALID"
-eval "$INPUT_FROM_SGM < $PARA_SRC_TEST.sgm  | $SRC_PREPROCESSING > $PARA_SRC_TEST"
-eval "$INPUT_FROM_SGM < $PARA_TGT_TEST.sgm  | $TGT_PREPROCESSING > $PARA_TGT_TEST"
+echo "Applying Thai segment to valid and test files..."
+python $PY_THAI segment $PARA_SRC_VALID $PARA_SRC_VALID_SEG
+python $PY_THAI segment $PARA_SRC_TEST $PARA_SRC_TEST_SEG
 
 echo "Applying Chinese segment to valid and test files..."
 $SEGMENTER ctb $PARA_TGT_VALID UTF-8 0 > $PARA_TGT_VALID_SEG
 $SEGMENTER ctb $PARA_TGT_TEST UTF-8 0 > $PARA_TGT_TEST_SEG
 
 echo "Applying BPE to valid and test files..."
-$FASTBPE applybpe $PARA_SRC_TRAIN_BPE $PARA_SRC_TRAIN $BPE_CODES $SRC_VOCAB
-$FASTBPE applybpe $PARA_TGT_TRAIN_BPE $PARA_TGT_TRAIN $BPE_CODES $TGT_VOCAB
-$FASTBPE applybpe $PARA_SRC_VALID_BPE $PARA_SRC_VALID $BPE_CODES $SRC_VOCAB
+# $FASTBPE applybpe $PARA_SRC_TRAIN_BPE $PARA_SRC_TRAIN $BPE_CODES $SRC_VOCAB
+# $FASTBPE applybpe $PARA_TGT_TRAIN_BPE $PARA_TGT_TRAIN $BPE_CODES $TGT_VOCAB
+$FASTBPE applybpe $PARA_SRC_VALID_BPE $PARA_SRC_VALID_SEG $BPE_CODES $SRC_VOCAB
 $FASTBPE applybpe $PARA_TGT_VALID_BPE $PARA_TGT_VALID_SEG $BPE_CODES $TGT_VOCAB
-$FASTBPE applybpe $PARA_SRC_TEST_BPE  $PARA_SRC_TEST  $BPE_CODES $SRC_VOCAB
+$FASTBPE applybpe $PARA_SRC_TEST_BPE  $PARA_SRC_TEST_SEG  $BPE_CODES $SRC_VOCAB
 $FASTBPE applybpe $PARA_TGT_TEST_BPE  $PARA_TGT_TEST_SEG  $BPE_CODES $TGT_VOCAB
 
 echo "Binarizing data..."
