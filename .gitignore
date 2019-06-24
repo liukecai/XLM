@@ -130,3 +130,6 @@ dmypy.json
 
 # pycharm
 .idea/
+
+# Our code
+x2_back_translate.*
