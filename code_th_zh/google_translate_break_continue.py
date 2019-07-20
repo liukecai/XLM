@@ -90,7 +90,7 @@ def main():
             rm.tpc_finish(t1)
         except:
             if (1 == rm.delta):
-                print("There is an error with the last line of output file.  Please delete it.")
+                print("There is an error with the last line of output file.  Please delete it manually.")
                 rm.tpc_abort(t1)
             exit()
 
