@@ -50,7 +50,7 @@ def google_translate_CtoE(to_translate, from_language="ch-CN", to_language="en")
 
 
 def main():
-    count = 0
+    #count = 0
     length_of_file2 = 0
 
     file1 = open("Book1_en.txt", mode="r", encoding="UTF-8")
@@ -69,17 +69,19 @@ def main():
     lines = file1.readlines()
     if length_of_file2 != 0:
         lines1 = lines[length_of_file2:]
-        file2.write("\n")
     else:
         lines1 = lines
 
+    print("The begin of translation process.")
+
     for line in lines1:
         result = google_translate_EtoC(line)
-        file2.write(result)
-        file2.write("\n")
+        file2.write(result+"\n")
+        """
         if count % 100000 == 0:
             print("Process lines: %d" % count)
         count += 1
+        """
     
     file1.close()
     file2.close()
