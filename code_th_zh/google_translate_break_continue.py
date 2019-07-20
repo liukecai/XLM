@@ -69,6 +69,7 @@ def main():
     lines = file1.readlines()
     if length_of_file2 != 0:
         lines1 = lines[length_of_file2:]
+        file2.write("\n")
     else:
         lines1 = lines
 
