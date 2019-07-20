@@ -1,5 +1,5 @@
 import requests
-import transaction
+from transaction.tests.examples import ResourceManager
 from bs4 import BeautifulSoup
   
 def getHTMLText(url):
@@ -76,15 +76,23 @@ def main():
         lines1 = lines
 
     print("The begin of translation process.")
+    rm = ResourceManager()
+    t1 = '3'
 
     for line in lines1:
         result = google_translate_EtoC(line)
         try:
-            file2.write(result+"\n")
+            rm.tpc_begin(t1)
+            rm.inc()
+            file2.write(result + "\n")
             file2.flush()
-            transaction.commit()
+            rm.tpc_vote(t1)
+            rm.tpc_finish(t1)
         except:
-            transaction.abort()
+            if (1 == rm.delta):
+                print("There is an error with the last line of output file.  Please delete it.")
+                rm.tpc_abort(t1)
+            exit()
 
         """
         if count % 100000 == 0:
