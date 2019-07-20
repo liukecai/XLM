@@ -62,8 +62,8 @@ def main():
         lines_of_file2 = file2.readlines()
         length_of_file2 = len(lines_of_file2)
         file2.close()
-        file3 = open("record_counts.txt", mode="a", encoding="UTF-8")
-        file3.write("---%d---" % length_of_file2)
+        file3 = open("locaction_of_breaks.txt", mode="a", encoding="UTF-8")
+        file3.write("---%d---\n" % length_of_file2)
         file3.close()
     except FileNotFoundError:
         length_of_file2 = 0
