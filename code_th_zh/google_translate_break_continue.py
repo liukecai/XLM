@@ -1,4 +1,5 @@
 import requests
+import transaction
 from bs4 import BeautifulSoup
   
 def getHTMLText(url):
@@ -8,7 +9,7 @@ def getHTMLText(url):
         return r.text
     except:
         print("Get HTML Text Failed!")
-        return 0
+        exit()
   
 def google_translate_EtoC(to_translate, from_language="en", to_language="ch-CN"):
     #根据参数生产提交的网址
@@ -26,6 +27,7 @@ def google_translate_EtoC(to_translate, from_language="en", to_language="ch-CN")
     except:
         print("Translation Failed!")
         result = ""
+        exit()
           
     return result
  
@@ -45,6 +47,7 @@ def google_translate_CtoE(to_translate, from_language="ch-CN", to_language="en")
     except:
         print("Translation Failed!")
         result = ""
+        exit()
           
     return result
 
@@ -76,7 +79,13 @@ def main():
 
     for line in lines1:
         result = google_translate_EtoC(line)
-        file2.write(result+"\n")
+        try:
+            file2.write(result+"\n")
+            file2.flush()
+            transaction.commit()
+        except:
+            transaction.abort()
+
         """
         if count % 100000 == 0:
             print("Process lines: %d" % count)
