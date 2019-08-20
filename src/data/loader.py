@@ -10,7 +10,7 @@ import os
 import numpy as np
 import torch
 
-from .dataset import Dataset, StreamDataset, ParallelDataset
+from .dataset import StreamDataset, Dataset, ParallelDataset
 from .dictionary import BOS_WORD, EOS_WORD, PAD_WORD, UNK_WORD, MASK_WORD
 
 
@@ -128,7 +128,8 @@ def load_mono_data(params, data):
             set_dico_parameters(params, data, mono_data['dico'])
 
             # create stream dataset
-            data['mono_stream'][lang][splt] = StreamDataset(mono_data['sentences'], mono_data['positions'], params)
+            bs = params.batch_size if splt == 'train' else 1
+            data['mono_stream'][lang][splt] = StreamDataset(mono_data['sentences'], mono_data['positions'], bs, params)
 
             # if there are several processes on the same machine, we can split the dataset
             if splt == 'train' and params.split_data and 1 < params.n_gpu_per_node <= data['mono_stream'][lang][splt].n_batches:
@@ -290,6 +291,10 @@ def check_data_params(params):
             for splt in ['train', 'valid', 'test']
         } for lang in params.langs if lang in required_mono
     }
+    for paths in params.mono_dataset.values():
+        for p in paths.values():
+            if not os.path.isfile(p):
+                logger.error(f"{p} not found")
     assert all([all([os.path.isfile(p) for p in paths.values()]) for paths in params.mono_dataset.values()])
 
     # check parallel datasets
@@ -304,6 +309,12 @@ def check_data_params(params):
         } for src in params.langs for tgt in params.langs
         if src < tgt and ((src, tgt) in required_para or (tgt, src) in required_para)
     }
+    for paths in params.para_dataset.values():
+        for p1, p2 in paths.values():
+            if not os.path.isfile(p1):
+                logger.error(f"{p1} not found")
+            if not os.path.isfile(p2):
+                logger.error(f"{p2} not found")
     assert all([all([os.path.isfile(p1) and os.path.isfile(p2) for p1, p2 in paths.values()]) for paths in params.para_dataset.values()])
 
     # check that we can evaluate on BLEU

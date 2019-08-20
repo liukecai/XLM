@@ -13,6 +13,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .memory import HashingMemory
+
 
 N_MAX_POSITIONS = 512  # maximum input sequence length
 
@@ -129,7 +131,7 @@ class PredLayer(nn.Module):
 
         if self.asm is False:
             scores = self.proj(x).view(-1, self.n_words)
-            loss = F.cross_entropy(scores, y, reduction='elementwise_mean')
+            loss = F.cross_entropy(scores, y, reduction='mean')
         else:
             _, loss = self.proj(x, y)
             scores = self.proj.log_prob(x) if get_scores else None
@@ -257,6 +259,7 @@ class TransformerModel(nn.Module):
         self.dico = dico
         self.id2lang = params.id2lang
         self.lang2id = params.lang2id
+        self.use_lang_emb = getattr(params, 'use_lang_emb', True)
         assert len(self.dico) == self.n_words
         assert len(self.id2lang) == len(self.lang2id) == self.n_langs
 
@@ -273,7 +276,7 @@ class TransformerModel(nn.Module):
         self.position_embeddings = Embedding(N_MAX_POSITIONS, self.dim)
         if params.sinusoidal_embeddings:
             create_sinusoidal_embeddings(N_MAX_POSITIONS, self.dim, out=self.position_embeddings.weight)
-        if params.n_langs > 1:
+        if params.n_langs > 1 and self.use_lang_emb:
             self.lang_embeddings = Embedding(self.n_langs, self.dim)
         self.embeddings = Embedding(self.n_words, self.dim, padding_idx=self.pad_index)
         self.layer_norm_emb = nn.LayerNorm(self.dim, eps=1e-12)
@@ -287,13 +290,25 @@ class TransformerModel(nn.Module):
             self.layer_norm15 = nn.ModuleList()
             self.encoder_attn = nn.ModuleList()
 
-        for _ in range(self.n_layers):
+        # memories
+        self.memories = nn.ModuleDict()
+        if getattr(params, 'use_memory', False):
+            mem_positions = params.mem_enc_positions if is_encoder else params.mem_dec_positions
+            for layer_id, pos in mem_positions:
+                assert 0 <= layer_id <= params.n_layers - 1
+                assert pos in ['in', 'after']
+                self.memories['%i_%s' % (layer_id, pos)] = HashingMemory.build(self.dim, self.dim, params)
+
+        for layer_id in range(self.n_layers):
             self.attentions.append(MultiHeadAttention(self.n_heads, self.dim, dropout=self.attention_dropout))
             self.layer_norm1.append(nn.LayerNorm(self.dim, eps=1e-12))
             if self.is_decoder:
                 self.layer_norm15.append(nn.LayerNorm(self.dim, eps=1e-12))
                 self.encoder_attn.append(MultiHeadAttention(self.n_heads, self.dim, dropout=self.attention_dropout))
-            self.ffns.append(TransformerFFN(self.dim, self.hidden_dim, self.dim, dropout=self.dropout, gelu_activation=params.gelu_activation))
+            if ('%i_in' % layer_id) in self.memories:
+                self.ffns.append(None)
+            else:
+                self.ffns.append(TransformerFFN(self.dim, self.hidden_dim, self.dim, dropout=self.dropout, gelu_activation=params.gelu_activation))
             self.layer_norm2.append(nn.LayerNorm(self.dim, eps=1e-12))
 
         # output layer
@@ -367,7 +382,7 @@ class TransformerModel(nn.Module):
         # embeddings
         tensor = self.embeddings(x)
         tensor = tensor + self.position_embeddings(positions).expand_as(tensor)
-        if langs is not None:
+        if langs is not None and self.use_lang_emb:
             tensor = tensor + self.lang_embeddings(langs)
         tensor = self.layer_norm_emb(tensor)
         tensor = F.dropout(tensor, p=self.dropout, training=self.training)
@@ -390,8 +405,17 @@ class TransformerModel(nn.Module):
                 tensor = self.layer_norm15[i](tensor)
 
             # FFN
-            tensor = tensor + self.ffns[i](tensor)
+            if ('%i_in' % i) in self.memories:
+                tensor = tensor + self.memories['%i_in' % i](tensor)
+            else:
+                tensor = tensor + self.ffns[i](tensor)
             tensor = self.layer_norm2[i](tensor)
+
+            # memory
+            if ('%i_after' % i) in self.memories:
+                tensor = tensor + self.memories['%i_after' % i](tensor)
+            # TODO: add extra layer norm here?
+
             tensor *= mask.unsqueeze(-1).to(tensor.dtype)
 
         # update cache length
@@ -472,9 +496,9 @@ class TransformerModel(nn.Module):
                 src_len=src_len,
                 cache=cache
             )
-            assert tensor.size() == (1, bs, self.dim)
-            tensor = tensor.data[-1, :, :]               # (bs, dim)
-            scores = self.pred_layer.get_scores(tensor)  # (bs, n_words)
+            assert tensor.size() == (1, bs, self.dim), (cur_len, max_len, src_enc.size(), tensor.size(), (1, bs, self.dim))
+            tensor = tensor.data[-1, :, :].type_as(src_enc)  # (bs, dim)
+            scores = self.pred_layer.get_scores(tensor)      # (bs, n_words)
 
             # select next words: sample or greedy
             if sample_temperature is None:
