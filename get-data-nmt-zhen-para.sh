@@ -269,10 +269,12 @@ $MAIN_PATH/preprocess.py $FULL_VOCAB $PARA_TGT_TEST_BPE
 #
 # Link monolingual validation and test data to parallel data
 #
-ln -sf $PARA_SRC_VALID_BPE.pth $SRC_VALID_BPE.pth
-ln -sf $PARA_TGT_VALID_BPE.pth $TGT_VALID_BPE.pth
-ln -sf $PARA_SRC_TEST_BPE.pth  $SRC_TEST_BPE.pth
-ln -sf $PARA_TGT_TEST_BPE.pth  $TGT_TEST_BPE.pth
+# ln -sf $PARA_SRC_TRAIN_BPE.pth $SRC_TRAIN_BPE.pth
+# ln -sf $PARA_TGT_TRAIN_BPE.pth $TGT_TRAIN_BPE.pth
+# ln -sf $PARA_SRC_VALID_BPE.pth $SRC_VALID_BPE.pth
+# ln -sf $PARA_TGT_VALID_BPE.pth $TGT_VALID_BPE.pth
+# ln -sf $PARA_SRC_TEST_BPE.pth  $SRC_TEST_BPE.pth
+# ln -sf $PARA_TGT_TEST_BPE.pth  $TGT_TEST_BPE.pth
 
 
 #
@@ -280,15 +282,15 @@ ln -sf $PARA_TGT_TEST_BPE.pth  $TGT_TEST_BPE.pth
 #
 echo ""
 echo "===== Data summary"
-echo "Monolingual training data:"
-echo "    $SRC: $SRC_TRAIN_BPE.pth"
-echo "    $TGT: $TGT_TRAIN_BPE.pth"
-echo "Monolingual validation data:"
-echo "    $SRC: $SRC_VALID_BPE.pth"
-echo "    $TGT: $TGT_VALID_BPE.pth"
-echo "Monolingual test data:"
-echo "    $SRC: $SRC_TEST_BPE.pth"
-echo "    $TGT: $TGT_TEST_BPE.pth"
+# echo "Monolingual training data:"
+# echo "    $SRC: $SRC_TRAIN_BPE.pth"
+# echo "    $TGT: $TGT_TRAIN_BPE.pth"
+# echo "Monolingual validation data:"
+# echo "    $SRC: $SRC_VALID_BPE.pth"
+# echo "    $TGT: $TGT_VALID_BPE.pth"
+# echo "Monolingual test data:"
+# echo "    $SRC: $SRC_TEST_BPE.pth"
+# echo "    $TGT: $TGT_TEST_BPE.pth"
 echo "Parallel training data:"
 echo "    $SRC: $PARA_SRC_TRAIN_BPE.pth"
 echo "    $TGT: $PARA_TGT_TRAIN_BPE.pth"
