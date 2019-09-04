@@ -219,6 +219,8 @@ def get_parser():
                         help="Use smaller dict for debugging purpose.")
     parser.add_argument("--mask_gen_lang", type=bool_flag, default=False,
                         help="Mask a language vocab when generate sentence.")
+    parser.add_argument("--mask_topk", type=int, default=1,
+                        help="When mask a language vocab we need use topk for find next word.")
     return parser
 
 

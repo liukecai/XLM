@@ -249,6 +249,8 @@ class TransformerModel(nn.Module):
 
         # Mask a language when generate a sentence
         self.mask_gen_lang = params.mask_gen_lang
+        if self.mask_gen_lang is True:
+            self.mask_topk = params.mask_topk
 
         # encoder / decoder, output layer
         self.is_encoder = is_encoder
@@ -507,12 +509,12 @@ class TransformerModel(nn.Module):
             # select next words: sample or greedy
             if sample_temperature is None:
                 if self.mask_gen_lang is True:
-                    next_words = torch.topk(scores, 20)[1].squeeze(1)
+                    next_words = torch.topk(scores, self.mask_topk)[1].squeeze(1)
                 else:
                     next_words = torch.topk(scores, 1)[1].squeeze(1)
             else:
                 if self.mask_gen_lang is True:
-                    next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 20).squeeze(1)
+                    next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), self.mask_topk).squeeze(1)
                 else:
                     next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
 
