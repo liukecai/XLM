@@ -217,6 +217,8 @@ def get_parser():
                         help="Use this way for avoid degenerate")
     parser.add_argument("--debug_dict", type=bool_flag, default=False,
                         help="Use smaller dict for debugging purpose.")
+    parser.add_argument("--mask_gen_lang", type=bool_flag, default=False,
+                        help="Mask a language vocab when generate sentence.")
     return parser
 
 

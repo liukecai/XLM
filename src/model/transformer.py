@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .memory import HashingMemory
+from ..utils import language_detect
 
 
 N_MAX_POSITIONS = 512  # maximum input sequence length
@@ -245,6 +246,9 @@ class TransformerModel(nn.Module):
         Transformer model (encoder or decoder).
         """
         super().__init__()
+
+        # Mask a language when generate a sentence
+        self.mask_gen_lang = params.mask_gen_lang
 
         # encoder / decoder, output layer
         self.is_encoder = is_encoder
@@ -502,9 +506,26 @@ class TransformerModel(nn.Module):
 
             # select next words: sample or greedy
             if sample_temperature is None:
-                next_words = torch.topk(scores, 1)[1].squeeze(1)
+                if self.mask_gen_lang is True:
+                    next_words = torch.topk(scores, 20)[1].squeeze(1)
+                else:
+                    next_words = torch.topk(scores, 1)[1].squeeze(1)
             else:
-                next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
+                if self.mask_gen_lang is True:
+                    next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 20).squeeze(1)
+                else:
+                    next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
+
+            if self.mask_gen_lang is True:
+                has_tgt_id = False
+                for i, wi in enumerate(next_words[0]):
+                    if language_detect(self.dico.id2word[wi.item()], self.id2lang[tgt_lang_id]):
+                        has_tgt_id = True
+                        next_words = next_words[:, i]
+                        break
+                if has_tgt_id is False:
+                    next_words = next_words[:, 0]
+
             assert next_words.size() == (bs,)
 
             # update generations / lengths / finished sentences / current length

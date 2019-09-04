@@ -292,3 +292,34 @@ def find_modules(module, module_name, module_instance, found):
         for name, child in module.named_children():
             name = ('%s[%s]' if name.isdigit() else '%s.%s') % (module_name, name)
             find_modules(child, name, module_instance, found)
+
+
+def language_detect(word: str, lang: str):
+    true_count = 0
+    false_count = 0
+
+    if lang == 'en':
+        for ch in word:
+            if ord(ch) >= 0x0020 and ord(ch) <= 0x007F:
+                true_count += 1
+            elif ch == '@':
+                true_count += 1
+            else:
+                false_count += 1
+        return true_count >= false_count
+
+    if lang == 'zh':
+        for ch in word:
+            if ord(ch) >= 0x3400 and ord(ch) <= 0x4DB5:
+                true_count += 1
+            elif ord(ch) >= 0x4E00 and ord(ch) <= 0x9FFF:
+                true_count += 1
+            elif ord(ch) >= 0xF900 and ord(ch) <= 0xF8FF:
+                true_count += 1
+            elif ord(ch) >= 0x20000 and ord(ch) <= 0x2EBE0:
+                true_count += 1
+            elif ch == '@':
+                true_count += 1
+            else:
+                false_count += 1
+        return true_count >= false_count
