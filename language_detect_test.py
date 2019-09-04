@@ -1,6 +1,6 @@
 #-*-coding:utf-8-*-
 
-from ..utils import language_detect
+from src.utils import language_detect
 
 vocab_path = r"data/processed/en-zh/vocab.en-zh"
 detect_path = vocab_path + ".lang.detect"
