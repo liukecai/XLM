@@ -517,14 +517,17 @@ class TransformerModel(nn.Module):
                     next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
 
             if self.mask_gen_lang is True:
-                has_tgt_id = False
-                for i, wi in enumerate(next_words[0]):
-                    if language_detect(self.dico.id2word[wi.item()], self.id2lang[tgt_lang_id]):
-                        has_tgt_id = True
-                        next_words = next_words[:, i]
-                        break
-                if has_tgt_id is False:
-                    next_words = next_words[:, 0]
+                tmp_next_words = torch.zeros(bs, dtype=torch.long, device='cuda:0')
+                for j, next_word in enumerate(next_words):
+                    has_tgt_id = False
+                    for i, wi in enumerate(next_word):
+                        if language_detect(self.dico.id2word[wi.item()], self.id2lang[tgt_lang_id]):
+                            has_tgt_id = True
+                            tmp_next_words[j] = wi
+                            break
+                    if has_tgt_id is False:
+                        tmp_next_words[j] = next_words[j, 0]
+                next_words = tmp_next_words.cuda()
 
             assert next_words.size() == (bs,)
 
