@@ -517,8 +517,8 @@ class TransformerModel(nn.Module):
                     next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
 
             if self.mask_gen_lang is True:
-                tmp_next_words = torch.zeros(bs, dtype=torch.long, device='cuda:0')
-                for j, next_word in enumerate(next_words):
+                tmp_next_words = torch.zeros(bs, dtype=torch.long)
+                for j, next_word in enumerate(next_words.cpu()):
                     has_tgt_id = False
                     for i, wi in enumerate(next_word):
                         if language_detect(self.dico.id2word[wi.item()], self.id2lang[tgt_lang_id]):
