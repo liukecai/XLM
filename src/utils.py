@@ -15,7 +15,6 @@ import argparse
 import subprocess
 import numpy as np
 import torch
-import unicodedata
 
 from .logger import create_logger
 from .data.dictionary import BOS_WORD, EOS_WORD, PAD_WORD, UNK_WORD, SPECIAL_WORD
@@ -327,15 +326,16 @@ def language_detect(word: str, lang: str):
         return true_count >= false_count
 
     if lang == 'zh':
-        # https://unicode-table.com/cn/blocks/cjk-unified-ideographs-extension-a/
+        # https://unicode-table.com/cn/blocks/cjk-unified-ideographs-extension-a/ (1)
+        # https://www.qqxiuzi.cn/zh/hanzi-unicode-bianma.php  (2)
         for ch in word:
-            if ord(ch) >= 0x3400 and ord(ch) <= 0x4DB5:
+            if ord(ch) >= 0x3400 and ord(ch) <= 0x4DB5: # 扩展A  (2)
                 true_count += 1
-            elif ord(ch) >= 0x4E00 and ord(ch) <= 0x9FFF:
+            elif ord(ch) >= 0x4E00 and ord(ch) <= 0x9FFF: # 中日韩统一表意文字 (1)
                 true_count += 1
-            elif ord(ch) >= 0xF900 and ord(ch) <= 0xF8FF:
+            elif ord(ch) >= 0xF900 and ord(ch) <= 0xFAD9: # 兼容汉字 (1,2)
                 true_count += 1
-            elif ord(ch) >= 0x20000 and ord(ch) <= 0x2EBE0:
+            elif ord(ch) >= 0x20000 and ord(ch) <= 0x2EBE0: # 扩展BCDEF (2)
                 true_count += 1
             elif is_punctuation(ch):
                 true_count += 0
@@ -364,7 +364,7 @@ def is_punctuation(word: str):
             return True
         if word >= 0x003A and word <= 0x003F:
             return True
-        if word >= 0x005C and word <= 0x0060:
+        if word >= 0x005B and word <= 0x0060:
             return True
         if word >= 0x007B and word <= 0x007F:
             return True
