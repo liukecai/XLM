@@ -28,3 +28,13 @@ assert is_number("4.3e+10")
 assert not is_number("0.120.30")
 assert not is_number("0.120a30")
 assert not is_number(".")
+
+
+assert not language_detect('《','en')
+assert not language_detect('《','zh') # TODO: handle chinese punctuation in the future
+assert not language_detect('：','en')
+assert not language_detect('：','zh') # TODO: handle chinese punctuation in the future
+assert language_detect(':','en')
+assert language_detect(':','zh')
+assert language_detect('"','en')
+assert language_detect('"','zh')
