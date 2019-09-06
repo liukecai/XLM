@@ -347,15 +347,9 @@ def language_detect(word: str, lang: str):
                 false_count += 1
         return true_count >= false_count
 
-
+FLOAT_PATTERN = re.compile(r"^[-+]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][-+]?[0-9]+)?$")
 def is_number(word: str):
-    try:
-        float(word)
-        return True
-    except ValueError:
-        pass
-
-    return False
+    return FLOAT_PATTERN.match(word)
 
 def is_punctuation(word: str):
     if len(word) == 1:
