@@ -17,7 +17,11 @@ import numpy as np
 import torch
 
 from .logger import create_logger
+from .data.dictionary import BOS_WORD, EOS_WORD, PAD_WORD, UNK_WORD, SPECIAL_WORD
 
+SPE_WORDS = [BOS_WORD, EOS_WORD, PAD_WORD, UNK_WORD]
+for i in range(10):
+    SPE_WORDS.append(SPECIAL_WORD % i)
 
 FALSY_STRINGS = {'off', 'false', '0'}
 TRUTHY_STRINGS = {'on', 'true', '1'}
@@ -292,3 +296,71 @@ def find_modules(module, module_name, module_instance, found):
         for name, child in module.named_children():
             name = ('%s[%s]' if name.isdigit() else '%s.%s') % (module_name, name)
             find_modules(child, name, module_instance, found)
+
+
+def language_detect(word: str, lang: str):
+    if word in SPE_WORDS:
+        return True
+
+    if is_number("".join(re.split(",|-|@@", word))):
+        return True
+
+    true_count = 0
+    false_count = 0
+
+    if lang == 'en':
+        # https://unicode-table.com/cn/blocks/basic-latin/
+        for ch in word:
+            if ord(ch) >= 0x0041 and ord(ch) <= 0x005A:
+                true_count += 1
+            elif ord(ch) >= 0x0061 and ord(ch) <= 0x007A:
+                true_count += 1
+            elif is_punctuation(ch):
+                true_count += 0
+            elif is_number(ch):
+                true_count += 0
+            elif ch == '@':   # 0x0040
+                true_count += 0
+            else:
+                false_count += 1
+        return true_count >= false_count
+
+    if lang == 'zh':
+        # https://unicode-table.com/cn/blocks/cjk-unified-ideographs-extension-a/ (1)
+        # https://www.qqxiuzi.cn/zh/hanzi-unicode-bianma.php  (2)
+        for ch in word:
+            if ord(ch) >= 0x3400 and ord(ch) <= 0x4DB5: # 扩展A  (2)
+                true_count += 1
+            elif ord(ch) >= 0x4E00 and ord(ch) <= 0x9FFF: # 中日韩统一表意文字 (1)
+                true_count += 1
+            elif ord(ch) >= 0xF900 and ord(ch) <= 0xFAD9: # 兼容汉字 (1,2)
+                true_count += 1
+            elif ord(ch) >= 0x20000 and ord(ch) <= 0x2EBE0: # 扩展BCDEF (2)
+                true_count += 1
+            elif is_punctuation(ch):
+                true_count += 0
+            elif is_number(ch):
+                true_count += 0
+            elif ch == '@':
+                true_count += 0  # 0, otherwise i@@ will be recognized as a Chinese word.
+            else:
+                false_count += 1
+        return true_count >= false_count
+
+FLOAT_PATTERN = re.compile(r"^[-+]?([0-9]+(\.[0-9]*)?|\.[0-9]+)([eE][-+]?[0-9]+)?$")
+def is_number(word: str):
+    return FLOAT_PATTERN.match(word)
+
+def is_punctuation(word: str):
+    if len(word) == 1:
+        word = ord(word)
+        if word >= 0x0020 and word <= 0x02F:
+            return True
+        if word >= 0x003A and word <= 0x003F:
+            return True
+        if word >= 0x005B and word <= 0x0060:
+            return True
+        if word >= 0x007B and word <= 0x007F:
+            return True
+
+    return False

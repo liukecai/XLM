@@ -17,6 +17,7 @@ from torch.nn import functional as F
 from torch.nn.utils import clip_grad_norm_
 import apex
 
+from .data.code_convertion import ConverterBPE2BPE
 from .optim import get_optimizer
 from .utils import to_cuda, concat_batches, find_modules
 from .utils import parse_lambda_config, update_lambdas
@@ -279,8 +280,16 @@ class Trainer(object):
         self.stats['processed_w'] = 0
         self.last_time = new_time
 
-        # log speed + stats + learning rate
-        logger.info(s_iter + s_speed + s_stat + s_lr)
+        if self.params.anti_degenerate:
+            s_convert = " || Converter Changes:All:% = {:}:{:}:{:.4f}".format(
+                self.converter.changed_word_counter,
+                self.converter.all_word_counter,
+                self.converter.changed_word_counter*1.0/self.converter.all_word_counter)
+            self.converter.resetCounters()
+            logger.info(s_iter + s_speed + s_stat + s_lr + s_convert)
+        else:
+            # log speed + stats + learning rate
+            logger.info(s_iter + s_speed + s_stat + s_lr)
 
     def get_iterator(self, iter_name, lang1, lang2, stream):
         """
@@ -811,6 +820,10 @@ class EncDecTrainer(Trainer):
         self.data = data
         self.params = params
 
+        # converter
+        if params.anti_degenerate:
+            self.converter = ConverterBPE2BPE(params)
+
         super().__init__(data, params)
 
     def mt_step(self, lang1, lang2, lambda_coeff):
@@ -908,6 +921,10 @@ class EncDecTrainer(Trainer):
             # training mode
             self.encoder.train()
             self.decoder.train()
+
+            if self.params.anti_degenerate:
+                x2 = self.converter.convertCodes2Lan(x2.cpu().numpy(), self.params.id2lang[lang2_id])
+                x2 = torch.cuda.LongTensor(x2)
 
         # encode generate sentence
         enc2 = self.encoder('fwd', x=x2, lengths=len2, langs=langs2, causal=False)

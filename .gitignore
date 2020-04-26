@@ -127,3 +127,9 @@ dmypy.json
 # /tools
 /data
 /dumped
+
+# pycharm
+.idea/
+
+# Our code
+x2_back_translate.*

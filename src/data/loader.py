@@ -48,6 +48,7 @@ def process_binarized(data, params):
     if (data['sentences'].dtype == np.int32) and (len(dico) < 1 << 16):
         logger.info("Less than 65536 words. Moving data from int32 to uint16 ...")
         data['sentences'] = data['sentences'].astype(np.uint16)
+    logger.info("Showing unknown words: %s" % data['unk_words'].keys())
     return data
 
 

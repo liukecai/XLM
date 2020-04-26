@@ -212,6 +212,15 @@ def get_parser():
     parser.add_argument("--master_port", type=int, default=-1,
                         help="Master port (for multi-node SLURM jobs)")
 
+    # avoid degenerate
+    parser.add_argument("--anti_degenerate", type=bool_flag, default=False,
+                        help="Use this way for avoid degenerate")
+    parser.add_argument("--debug_dict", type=bool_flag, default=False,
+                        help="Use smaller dict for debugging purpose.")
+    parser.add_argument("--mask_gen_lang", type=bool_flag, default=False,
+                        help="Mask a language vocab when generate sentence.")
+    parser.add_argument("--mask_topk", type=int, default=1,
+                        help="When mask a language vocab we need use topk for find next word.")
     return parser
 
 

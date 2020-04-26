@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .memory import HashingMemory
+from ..utils import language_detect
 
 
 N_MAX_POSITIONS = 512  # maximum input sequence length
@@ -245,6 +246,11 @@ class TransformerModel(nn.Module):
         Transformer model (encoder or decoder).
         """
         super().__init__()
+
+        # Mask a language when generate a sentence
+        self.mask_gen_lang = params.mask_gen_lang
+        if self.mask_gen_lang is True:
+            self.mask_topk = params.mask_topk
 
         # encoder / decoder, output layer
         self.is_encoder = is_encoder
@@ -502,9 +508,29 @@ class TransformerModel(nn.Module):
 
             # select next words: sample or greedy
             if sample_temperature is None:
-                next_words = torch.topk(scores, 1)[1].squeeze(1)
+                if self.mask_gen_lang is True:
+                    next_words = torch.topk(scores, self.mask_topk)[1].squeeze(1)
+                else:
+                    next_words = torch.topk(scores, 1)[1].squeeze(1)
             else:
-                next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
+                if self.mask_gen_lang is True:
+                    next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), self.mask_topk).squeeze(1)
+                else:
+                    next_words = torch.multinomial(F.softmax(scores / sample_temperature, dim=1), 1).squeeze(1)
+
+            if self.mask_gen_lang is True:
+                tmp_next_words = torch.zeros(bs, dtype=torch.long)
+                for j, next_word in enumerate(next_words.cpu()):
+                    has_tgt_id = False
+                    for i, wi in enumerate(next_word):
+                        if language_detect(self.dico.id2word[wi.item()], self.id2lang[tgt_lang_id]):
+                            has_tgt_id = True
+                            tmp_next_words[j] = wi
+                            break
+                    if has_tgt_id is False:
+                        tmp_next_words[j] = next_words[j, 0]
+                next_words = tmp_next_words.cuda()
+
             assert next_words.size() == (bs,)
 
             # update generations / lengths / finished sentences / current length
