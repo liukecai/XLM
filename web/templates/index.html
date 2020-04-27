@@ -166,7 +166,8 @@
             },
             error: function(data) {
                 $("#info-modal-title").text("Error Info");
-                $("#info-modal-content").css("color", "red").text("Translate error");
+                $("#info-modal-content").css("color", "red")
+                    .text(data["status"] + '\n' + data['responseJSON']['reason']);
                 $("#info-modal").modal("toggle");
             }
         });
@@ -194,7 +195,8 @@
             error: function(data) {
                 $("#load-model").modal("toggle");
                 $("#info-modal-title").text("Load Error");
-                $("#info-modal-content").css("color", "red").text("Load failed");
+                $("#info-modal-content").css("color", "red")
+                    .text(data["status"] + '\n' + data['responseJSON']['reason']);
                 $("#info-modal").modal("toggle");
             }
         });
