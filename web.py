@@ -31,5 +31,16 @@ def translate():
     return jsonify({"result": result}), 200
 
 
+@app.route("/load", methods=["POST"])
+def load_model():
+    params = {"exp_name": request.form["exp_name"],
+                "exp_id": request.form["exp_id"],
+                "batch_size": request.form["batch_size"],
+                "model_path": request.form["model_path"],
+                "src_lang": request.form["src_lang"],
+                "tgt_lang": request.form["tgt_lang"]}
+
+    return jsonify({"info":"success"}), 200
+
 if __name__ == "__main__":
     app.run()

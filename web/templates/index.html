@@ -46,6 +46,8 @@
         </div>
         <div class="align-items-left">
             <button type="button" class="btn btn-primary" onclick="click_for_translate()">翻译</button>
+            <span> </span>
+            <button type="button" class="btn btn-primary" onclick="$('#load-model').modal('show')">加载模型</button>
         </div>
     </div>
 
@@ -65,17 +67,17 @@
         </div>
     </div>
 
-    <div class="modal" id="error-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal" id="info-modal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Error Info</h5>
+                    <h5 class="modal-title" id="info-modal-title">Error Info</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Modal body text goes here.</p>
+                    <p id="info-modal-content">Modal body text goes here.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -84,9 +86,71 @@
         </div>
     </div>
 
+    <div class="modal" id="load-model" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Load Model Info</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="exp_name_label">Experiment Name</span>
+                        </div>
+                        <input type="text" class="form-control" id="exp_name" aria-describedby="exp_name_label">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="exp_id_label">Experiment ID</span>
+                        </div>
+                        <input type="text" class="form-control" id="exp_id" aria-describedby="exp_id_label">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="batch_size_label">Batch Size</span>
+                        </div>
+                        <input type="text" class="form-control" id="batch_size" aria-describedby="batch_size_label">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="model_path_label">Model Path</span>
+                        </div>
+                        <input type="text" class="form-control" id="model_path" aria-describedby="model_path_label">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="src_lang_label">Source Language</span>
+                        </div>
+                        <input type="text" class="form-control" id="src_lang" aria-describedby="src_lang_label">
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="tgt_lang_label">Target Language</span>
+                        </div>
+                        <input type="text" class="form-control" id="tgt_lang" aria-describedby="tgt_lang_label">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="click_for_load_model()">Load</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script type="text/javascript">
+    $('#load-model').modal('show');
+
     function click_for_translate() {
         var lang1 = $("#src-select").find("option:selected").attr("value");
         var lang2 = $("#tgt-select").find("option:selected").attr("value");
@@ -101,11 +165,39 @@
                 $("#output-area").text(data["result"]);
             },
             error: function(data) {
-
-                $("#error-modal").modal("toggle");
+                $("#info-modal-title").text("Error Info");
+                $("#info-modal-content").css("color", "red").text("Translate error");
+                $("#info-modal").modal("toggle");
             }
         });
 
+    }
+
+    function click_for_load_model() {
+        var params = {"exp_name": $("#exp_name").val(),
+                      "exp_id": $("#exp_id").val(),
+                      "batch_size": $("#batch_size").val(),
+                      "model_path": $("#model_path").val(),
+                      "src_lang": $("#src_lang").val(),
+                      "tgt_lang": $("#tgt_lang").val()}
+        $.ajax({
+            type: "post",
+            dataType: "json",
+            data: params,
+            url: "/load",
+            success: function(data) {
+                $("#load-model").modal("toggle");
+                $("#info-modal-title").text("Load Info");
+                $("#info-modal-content").css("color", "black").text("Load successful");
+                $("#info-modal").modal("toggle");
+            },
+            error: function(data) {
+                $("#load-model").modal("toggle");
+                $("#info-modal-title").text("Load Error");
+                $("#info-modal-content").css("color", "red").text("Load failed");
+                $("#info-modal").modal("toggle");
+            }
+        });
     }
 
 </script>
