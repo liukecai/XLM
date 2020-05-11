@@ -159,6 +159,7 @@
         $.ajax({
             type: "post",
             dataType: "json",
+            timeout: 600000,
             data: {"text":text, "lang1":lang1, "lang2":lang2},
             url: "/translate",
             success: function(data) {
@@ -184,6 +185,7 @@
         $.ajax({
             type: "post",
             dataType: "json",
+            timeout: 600000,
             data: params,
             url: "/load",
             success: function(data) {

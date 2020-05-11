@@ -35,7 +35,10 @@ def translate():
     if not MODEL.is_loaded():
         return jsonify({"info": "failed", "reason": "Model not loaded."}), 500
 
-    result = content['text']
+    input = list()
+    input.append(content["text"])
+
+    result = MODEL.translate(input, content["lang1"], content["lang2"])
     return jsonify({"info": "success", "result": result}), 200
 
 
