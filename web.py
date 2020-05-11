@@ -28,6 +28,7 @@ LOADED_MODEL = False
 MODEL_ENCODER = None
 MODEL_DECODER = None
 LOGGER = None
+PARAMS = None
 
 @app.route("/")
 def index():
@@ -56,6 +57,7 @@ def load_model():
     global MODEL_ENCODER
     global MODEL_DECODER
     global LOGGER
+    global PARAMS
 
     if LOADED_MODEL:
         LOADED_MODEL = False
@@ -81,10 +83,10 @@ def load_model():
         return jsonify({"info": "failed", "reason": "Batch size error: %s" % err}), 500
 
     params["dump_path"] = os.path.join("./dumped", "web")
-    params = __params_process(params)
+    PARAMS = __params_process(params)
 
     try:
-        __load_model(params, model_path)
+        __load_model(PARAMS, model_path)
     except Exception as err:
         LOGGER.info(traceback.format_exc()) # print full exception stack
         return jsonify({"info": "failed", "reason": "Load error: %s" % err}), 500
