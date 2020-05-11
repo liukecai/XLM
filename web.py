@@ -25,7 +25,8 @@ else:
 app.debug = True
 
 LOADED_MODEL = False
-MODEL = None
+MODEL_ENCODER = None
+MODEL_DECODER = None
 LOGGER = None
 
 @app.route("/")
@@ -52,8 +53,15 @@ def translate():
 def load_model():
     # using global var
     global LOADED_MODEL
-    global MODEL
+    global MODEL_ENCODER
+    global MODEL_DECODER
     global LOGGER
+
+    if LOADED_MODEL:
+        LOADED_MODEL = False
+        del MODEL_ENCODER
+        del MODEL_DECODER
+        LOGGER.info("Reload model...")
 
     params = {"exp_name": request.form["exp_name"],
                 "exp_id": request.form["exp_id"],
@@ -82,6 +90,7 @@ def load_model():
         return jsonify({"info": "failed", "reason": "Load error: %s" % err}), 500
 
     LOADED_MODEL = True
+    LOGGER.info("Load model success.")
     return jsonify({"info": "success"}), 200
 
 
@@ -103,6 +112,11 @@ def __load_model(params, model_path):
     decoder = TransformerModel(model_params, dico, is_encoder=False, with_output=True).cuda().eval()
     encoder.load_state_dict(reloaded['encoder'])
     decoder.load_state_dict(reloaded['decoder'])
+
+    global MODEL_ENCODER
+    global MODEL_DECODER
+    MODEL_ENCODER = encoder
+    MODEL_DECODER = decoder
 
 
 def __params_process(dic):
